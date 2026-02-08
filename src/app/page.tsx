@@ -91,8 +91,8 @@ export default function Home() {
               isDark ? "text-white" : "text-slate-600",
             )}
           >
-            Monitor your target market 24/7. Get alerted the moment a new
-            business opens or a business gets a bad review.
+            Scan your target market and get leads that needs websites or AI
+            solutions.
           </p>
 
           <div className="flex flex-col items-center gap-4">
@@ -111,7 +111,7 @@ export default function Home() {
                 isDark ? "text-white" : "text-slate-400",
               )}
             >
-              *get 50 free credits upon registration
+              *get 3000 free credits upon registration
             </p>
           </div>
         </div>

@@ -51,7 +51,7 @@ export function AddMonitorDialog() {
 
       if (result.success) {
         toast({
-          title: "Monitor Created",
+          title: "Scan Created",
           description: `Ready to scan ${keyword} in ${location}. Click Play to start.`,
         });
         setKeyword("");
@@ -64,7 +64,7 @@ export function AddMonitorDialog() {
           toast({
             variant: "destructive",
             title: "Error",
-            description: result.error || "Failed to create monitor.",
+            description: result.error || "Failed to create scan.",
           });
         }
       }
@@ -85,14 +85,14 @@ export function AddMonitorDialog() {
         <DialogTrigger asChild>
           <Button className="!bg-[#ffe600] text-black hover:!bg-[#ffe600] font-bold shadow-lg shadow-[#ffe600]/20 transition-all flex items-center gap-2 px-6">
             <Plus size={16} />
-            Add Monitor
+            Add Scan
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px] rounded-3xl border-zinc-800 bg-zinc-950 text-white">
           <DialogHeader>
-            <DialogTitle>New Market Monitor</DialogTitle>
+            <DialogTitle>New Scan Monitor</DialogTitle>
             <DialogDescription className="text-zinc-400">
-              Define the target business and location you want to track.
+              Define the target business and location you want to scan.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="grid gap-4 py-4">
@@ -129,7 +129,7 @@ export function AddMonitorDialog() {
                     Saving...
                   </>
                 ) : (
-                  "Add Monitor"
+                  "Add Scan"
                 )}
               </Button>
             </DialogFooter>
@@ -142,14 +142,14 @@ export function AddMonitorDialog() {
         <AlertDialog open={showWarning} onOpenChange={setShowWarning}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Monitor Already Exists</AlertDialogTitle>
+              <AlertDialogTitle>Scan Already Exists</AlertDialogTitle>
               <AlertDialogDescription>
                 You are already tracking <strong>{keyword}</strong> in{" "}
                 <strong>{location}</strong>.
                 <br />
                 <br />
-                Please delete the existing monitor if you want to start fresh,
-                or select a different location.
+                Please delete the existing scan if you want to start fresh, or
+                select a different location.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

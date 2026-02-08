@@ -18,21 +18,20 @@ export async function POST(req: Request) {
     const userId = session.user.id;
 
     // --- PRODUCTION ECONOMY SETTINGS ---
-    const COST = 100; // Cost per scan
-    const LIMIT = 200; // Max leads scraped per scan (THE 200 LIMIT)
-    const MAX_SCANS = 10; // Hard limit scans per month
-    const MONTHLY_CREDITS = 3000; // Reset amount
+    const COST = 100;
+    const LIMIT = 200;
+    const MAX_SCANS = 10;
+    const MONTHLY_CREDITS = 3000;
 
-    // 1. GET USER DATA
+    // 1. GET USER DATA (For Lazy Reset Only)
     const { data: user } = await supabase
       .from("users")
       .select("credits, scans_this_month, billing_start_date")
       .eq("id", userId)
       .single();
 
-    if (!user) {
+    if (!user)
       return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
 
     // 2. LAZY RESET LOGIC (New Month Check)
     const now = new Date();
@@ -40,11 +39,7 @@ export async function POST(req: Request) {
     const oneMonthLater = new Date(billingStart);
     oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
 
-    let currentScanCount = user.scans_this_month;
-    let currentCredits = user.credits;
-
     if (now >= oneMonthLater) {
-      // ✅ IT'S A NEW MONTH! REFILL & RESET
       await supabase
         .from("users")
         .update({
@@ -53,41 +48,25 @@ export async function POST(req: Request) {
           billing_start_date: now.toISOString(),
         })
         .eq("id", userId);
-
-      currentScanCount = 0;
-      currentCredits = MONTHLY_CREDITS;
     }
 
-    // 3. MONTHLY LIMIT CHECK
-    if (currentScanCount >= MAX_SCANS) {
+    // 3. ATOMIC TRANSACTION (The "Anti-Hack" Fix)
+    // We call the Database Function to check balance & deduct safely.
+    const { error: rpcError } = await supabase.rpc("start_scan_transaction", {
+      p_user_id: userId,
+      p_cost: COST,
+      p_max_scans: MAX_SCANS,
+    });
+
+    if (rpcError) {
+      // Return specific error messages to frontend
       return NextResponse.json(
-        {
-          error: `Monthly limit reached (${MAX_SCANS}/${MAX_SCANS}). Resets on ${oneMonthLater.toLocaleDateString()}.`,
-        },
+        { error: rpcError.message }, // "Insufficient Credits" or "Limit Reached"
         { status: 403 },
       );
     }
 
-    // 4. CREDIT BALANCE CHECK
-    if (currentCredits < COST) {
-      return NextResponse.json(
-        { error: `Insufficient credits. This scan costs ${COST} credits.` },
-        { status: 402 },
-      );
-    }
-
-    // 5. TRANSACTION (Deduct Credits + Increment Count)
-    const { error: updateError } = await supabase
-      .from("users")
-      .update({
-        credits: currentCredits - COST,
-        scans_this_month: currentScanCount + 1,
-      })
-      .eq("id", userId);
-
-    if (updateError) throw new Error("Failed to process transaction");
-
-    // 6. EXECUTE SCRAPE
+    // 4. EXECUTE SCRAPE
     const apiKey = process.env.OUTSCRAPER_API_KEY;
     const searchQuery = `${keyword} in ${location}`;
     addLog(`🚀 STARTING JOB: "${searchQuery}" (-${COST} credits)`);
@@ -101,13 +80,11 @@ export async function POST(req: Request) {
 
     if (!data.id) {
       // Refund if API call fails immediately
-      await supabase
-        .from("users")
-        .update({
-          credits: currentCredits,
-          scans_this_month: currentScanCount,
-        })
-        .eq("id", userId);
+      // Note: We use a simple increment here because it's a refund, risk is low.
+      await supabase.rpc("increment_credits", {
+        p_user_id: userId,
+        p_amount: COST,
+      });
 
       throw new Error("Outscraper API Failed. Credits Refunded.");
     }

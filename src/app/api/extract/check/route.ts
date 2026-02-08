@@ -1,42 +1,70 @@
+import { createClient } from "@supabase/supabase-js"; // <--- CHANGED
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { addLog } from "@/lib/logger";
 
 export async function POST(req: Request) {
-  const supabase = createRouteHandlerClient({ cookies });
+  // 1. User Client (For Auth Check Only)
+  const supabaseUser = createRouteHandlerClient({ cookies });
+
+  // 2. Admin Client (The "Master Key" to bypass RLS)
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!, // <--- MUST BE IN .ENV
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    },
+  );
+
   const REFUND_AMOUNT = 100;
 
   try {
     const { requestId } = await req.json();
     const apiKey = process.env.OUTSCRAPER_API_KEY;
 
-    // 1. Check Status
+    // --- 1. Check Outscraper Status ---
     const statusUrl = `https://api.app.outscraper.com/requests/${requestId}`;
     const response = await fetch(statusUrl, {
       headers: { "X-API-KEY": apiKey! },
     });
+
+    if (!response.ok) {
+      throw new Error(
+        `Outscraper API Error: ${response.status} ${response.statusText}`,
+      );
+    }
+
     const data = await response.json();
 
     if (data.status === "PENDING" || data.status === "Processing") {
       return NextResponse.json({ status: "PENDING" });
     }
 
-    // 2. Process Results
-    const rawResults = data.data?.flat() || [];
-    const totalScanned = rawResults.length; // <--- METRIC 1: TOTAL FOUND
+    if (data.status !== "Success") {
+      throw new Error(
+        `Outscraper Job Failed: ${data.error || JSON.stringify(data)}`,
+      );
+    }
 
+    // --- 2. Auth Check ---
     const {
       data: { session },
-    } = await supabase.auth.getSession();
+    } = await supabaseUser.auth.getSession();
     const userId = session?.user?.id;
     if (!userId)
       return NextResponse.json({ error: "No User" }, { status: 401 });
 
+    // --- 3. Process Results ---
+    const rawResults = data.data?.flat() || [];
+    const totalScanned = rawResults.length;
     const validLeads: any[] = [];
     const validPlaceIds: string[] = [];
 
-    // --- CTO LOGIC: SNIPER FILTER ---
+    // --- SNIPER FILTER ---
     for (const item of rawResults) {
       if (
         !item.place_id ||
@@ -46,16 +74,13 @@ export async function POST(req: Request) {
         continue;
       }
 
-      // SNIPER FILTER (Discard "Perfect" Businesses)
       const isVerified = item.verified !== false;
       const hasWebsite = !!(item.site || item.website);
       const rating = item.rating || 0;
 
-      if (rating >= 4.5 && hasWebsite && isVerified) {
-        continue; // <--- DISCARD (Too perfect)
-      }
+      if (rating >= 4.5 && hasWebsite && isVerified) continue;
 
-      // ... (Email Extraction Logic) ...
+      // Email Logic
       let email = null;
       const genericPrefixes = [
         "info",
@@ -77,7 +102,6 @@ export async function POST(req: Request) {
           if (c) allEmails.push(c);
         });
       }
-
       const uniqueEmails = [...new Set(allEmails)];
       const personalEmail = uniqueEmails.find(
         (e) => !genericPrefixes.includes(e.split("@")[0].toLowerCase()),
@@ -126,47 +150,44 @@ export async function POST(req: Request) {
       validPlaceIds.push(item.place_id);
     }
 
-    // 3. REFUND LOGIC (Enhanced Diagnostics)
+    // --- 4. Refund Logic (Admin Client) ---
     if (validLeads.length === 0) {
       addLog(`⚠️ 0 Qualified Leads. Scanned: ${totalScanned}. Refunding.`);
 
-      const { data: user } = await supabase
+      const { data: user } = await supabaseAdmin // <--- ADMIN
         .from("users")
         .select("credits")
         .eq("id", userId)
         .single();
 
       if (user) {
-        await supabase
+        await supabaseAdmin // <--- ADMIN
           .from("users")
           .update({ credits: user.credits + REFUND_AMOUNT })
           .eq("id", userId);
       }
 
-      // DIAGNOSIS: Why was it 0?
       let reason = "NO_DATA";
-      if (totalScanned > 0) {
-        reason = "MARKET_SATURATED"; // Found leads, but all were perfect
-      }
+      if (totalScanned > 0) reason = "MARKET_SATURATED";
 
       return NextResponse.json({
         status: "ZERO_RESULTS",
-        scanned: totalScanned, // <--- PASS DATA TO FRONTEND
+        scanned: totalScanned,
         reason: reason,
       });
     }
 
-    // 4. SAVE LEADS
+    // --- 5. Save Leads (Admin Client - Bypasses RLS) ---
     addLog(`✅ Saving ${validLeads.length} leads...`);
 
-    const { error: upsertError } = await supabase
+    const { error: upsertError } = await supabaseAdmin // <--- ADMIN
       .from("leads")
       .upsert(validLeads, { onConflict: "place_id" });
 
     if (upsertError) throw upsertError;
 
-    // Link to User
-    const { data: dbLeads } = await supabase
+    // --- 6. Link to User (Admin Client) ---
+    const { data: dbLeads } = await supabaseAdmin // <--- ADMIN
       .from("leads")
       .select("id")
       .in("place_id", validPlaceIds);
@@ -178,7 +199,7 @@ export async function POST(req: Request) {
         is_unlocked: false,
       }));
 
-      await supabase
+      await supabaseAdmin
         .from("user_leads")
         .upsert(userLinks, { onConflict: "user_id, lead_id" });
     }

@@ -109,7 +109,7 @@ export default function DashboardPage() {
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <Radio size={20} className="text-[#ffe600]" />
-            Active Monitors
+            Active Scans Monitor
           </h2>
           <div className="bg-[#ffe600] rounded-full text-black font-bold shadow-lg shadow-[#ffe600]/20 transition-all hover:bg-[#ffe600]/90">
             <AddMonitorDialog />
@@ -134,7 +134,7 @@ export default function DashboardPage() {
                     colSpan={5}
                     className="px-6 py-8 text-center text-zinc-500"
                   >
-                    No active monitors. Click "Add Monitor" to start tracking.
+                    No active scans. Click "Add Scan" to start tracking.
                   </td>
                 </tr>
               ) : (
@@ -200,7 +200,7 @@ export default function DashboardPage() {
                                 onClick={() => startScrape(m)}
                                 className="!bg-[#ffe600] !text-black hover:!bg-[#ffe600]/90 font-bold border-none"
                               >
-                                Confirm (-100 Credits)
+                                Confirm (100 Credits)
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>

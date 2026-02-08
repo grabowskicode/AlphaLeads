@@ -89,7 +89,7 @@ export function AppSidebar() {
                   icon: LayoutDashboard,
                   href: "/dashboard",
                 },
-                { label: "Leads Explorer", icon: Users, href: "/leads" },
+                { label: "Lead Database", icon: Users, href: "/leads" },
               ].map((item) => {
                 const isActive = pathname === item.href;
                 return (

@@ -10,6 +10,7 @@ import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useToast } from "@/hooks/use-toast";
+import { AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,7 +28,7 @@ export default function LoginPage() {
     setMounted(true);
   }, []);
 
-  // ÚJ: State checks
+  // State checks
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
@@ -56,14 +57,6 @@ export default function LoginPage() {
       title: "Signed out",
       description: "You have been signed out successfully.",
     });
-  };
-
-  // ... (rest of methods)
-
-  const normalizeEmail = (e: string) => e.trim().toLowerCase();
-
-  const validatePassword = (password: string) => {
-    return true; // This allows any password
   };
 
   const handleGoogleLogin = async () => {
@@ -101,7 +94,6 @@ export default function LoginPage() {
         });
         return;
       } else {
-        // Reset the count after 5 minutes
         delete loginAttempts[email];
         localStorage.setItem("loginAttempts", JSON.stringify(loginAttempts));
       }
@@ -141,38 +133,8 @@ export default function LoginPage() {
     }
   };
 
-  const handleSignUp = async () => {
-    setIsSubmitting(true);
-    // The rest of the sign-up logic continues here...
-
-    setIsSubmitting(true);
-    const { error } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
-      options: {
-        emailRedirectTo: `${location.origin}/auth/callback`,
-      },
-    });
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Sign Up Failed",
-        description: error.message,
-      });
-    } else {
-      toast({
-        title: "Check your email",
-        description:
-          "Confirmation link sent. If you already have an account, please Sign In.",
-      });
-    }
-    setIsSubmitting(false);
-  };
-
   // --- RENDER ---
 
-  // NOTE: If mounted is false, we return null (handled below).
   if (!mounted) return null;
 
   // SCENARIO 1: User is ALREADY LOGGED IN
@@ -210,23 +172,6 @@ export default function LoginPage() {
             >
               Go to Dashboard
             </Button>
-
-            <div className="relative my-2">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span
-                  className={cn(
-                    "bg-background px-2 text-muted-foreground",
-                    isDark ? "bg-[#090909]" : "bg-white",
-                  )}
-                >
-                  or
-                </span>
-              </div>
-            </div>
-
             <Button
               variant="outline"
               className="w-full"
@@ -241,7 +186,6 @@ export default function LoginPage() {
   }
 
   // SCENARIO 2: NOT LOGGED IN (Show Form)
-
   return (
     <div
       className={cn(
@@ -270,52 +214,13 @@ export default function LoginPage() {
               isDark ? "text-slate-300" : "text-slate-700",
             )}
           >
-            Sign in or create an account to manage your finances.
+            Members Only Access
           </p>
         </div>
 
-        {/* ÚJ: Google Login Gomb a form felett */}
-        <div className="mb-4">
-          <Button
-            variant="outline"
-            type="button"
-            className="w-full gap-2"
-            onClick={handleGoogleLogin}
-          >
-            <svg
-              className="h-5 w-5"
-              aria-hidden="true"
-              focusable="false"
-              data-prefix="fab"
-              data-icon="google"
-              role="img"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 488 512"
-            >
-              <path
-                fill="currentColor"
-                d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
-              ></path>
-            </svg>
-            Continue with Google
-          </Button>
-
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span
-                className={cn(
-                  "bg-background px-2 text-muted-foreground",
-                  isDark ? "bg-[#090909]" : "bg-white",
-                )}
-              >
-                Or continue with
-              </span>
-            </div>
-          </div>
-        </div>
+        {/* Google Login Removed or kept based on preference.
+            Usually invite-only apps stick to Email/Password invite links.
+            Kept here for convenience if you use Google for your own team. */}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
@@ -341,9 +246,6 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
             />
-            {passwordError && (
-              <p className="text-red-500 text-xs">{passwordError}</p>
-            )}
           </div>
 
           <div className="flex flex-col gap-2">
@@ -362,18 +264,18 @@ export default function LoginPage() {
               Forgot password?
             </Link>
 
-            <p className="text-center text-xs text-muted-foreground mt-1"></p>
-
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={handleSignUp}
-              disabled={isSubmitting}
-              title={"Create a new account"}
-            >
-              Register Now
-            </Button>
+            {/* CTO CHANGE: REMOVED REGISTER BUTTON & ADDED INVITE NOTICE */}
+            <div className="mt-4 p-3 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-start gap-3">
+              <AlertCircle
+                size={18}
+                className="text-zinc-500 mt-0.5 shrink-0"
+              />
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 text-left">
+                <strong>Invite Only:</strong> Public registration is disabled.
+                Please check your email for an invite from the Skool community
+                admin.
+              </p>
+            </div>
           </div>
         </form>
       </div>
