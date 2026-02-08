@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js"; // <--- CHANGED
+import { createClient } from "@supabase/supabase-js";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -25,6 +25,26 @@ export async function POST(req: Request) {
   try {
     const { requestId } = await req.json();
     const apiKey = process.env.OUTSCRAPER_API_KEY;
+
+    // --- [SECURITY FIX] 0. Check Replay Attack ---
+    // Check if this requestId has already been processed to prevent infinite refunds
+    const { data: existingRequest } = await supabaseAdmin
+      .from("processed_requests")
+      .select("status")
+      .eq("request_id", requestId)
+      .single();
+
+    if (existingRequest) {
+      // If we already processed it, return the same status to the frontend
+      // so it stops polling, but DO NOT run the logic (or refund) again.
+      const status =
+        existingRequest.status === "REFUNDED" ? "ZERO_RESULTS" : "SUCCESS";
+
+      return NextResponse.json({
+        status: status,
+        message: "Request already processed. Skipping replay.",
+      });
+    }
 
     // --- 1. Check Outscraper Status ---
     const statusUrl = `https://api.app.outscraper.com/requests/${requestId}`;
@@ -167,6 +187,13 @@ export async function POST(req: Request) {
           .eq("id", userId);
       }
 
+      // [SECURITY FIX] Mark as REFUNDED so we don't refund again
+      await supabaseAdmin.from("processed_requests").insert({
+        request_id: requestId,
+        user_id: userId,
+        status: "REFUNDED",
+      });
+
       let reason = "NO_DATA";
       if (totalScanned > 0) reason = "MARKET_SATURATED";
 
@@ -203,6 +230,13 @@ export async function POST(req: Request) {
         .from("user_leads")
         .upsert(userLinks, { onConflict: "user_id, lead_id" });
     }
+
+    // [SECURITY FIX] Mark as COMPLETED so we don't process again
+    await supabaseAdmin.from("processed_requests").insert({
+      request_id: requestId,
+      user_id: userId,
+      status: "COMPLETED",
+    });
 
     return NextResponse.json({
       status: "SUCCESS",
