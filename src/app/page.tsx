@@ -118,9 +118,7 @@ export default function Home() {
 
         {/* HOW IT WORKS */}
         <div id="how-it-works" className="w-full max-w-4xl mb-24 scroll-mt-32">
-          <h2 className="text-3xl font-bold mb-12">
-            The Set-and-Forget Engine
-          </h2>
+          <h2 className="text-3xl font-bold mb-12">The Up-to-Date Engine</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative">
             {/* Step 1 */}
@@ -138,7 +136,7 @@ export default function Home() {
               <div className="mb-6 p-4 rounded-full bg-[#ffe600] text-black shadow-lg">
                 <Search size={40} />
               </div>
-              <h3 className="text-xl font-bold mb-2">Create a Monitor</h3>
+              <h3 className="text-xl font-bold mb-2">Create Scans</h3>
               <p
                 className={cn(
                   "text-sm",
@@ -146,8 +144,7 @@ export default function Home() {
                 )}
               >
                 Tell us the industry and location (e.g., "Dentists in
-                Budapest"). Our AI wakes up every Monday to scan for
-                opportunities.
+                Budapest"). We found you the best opportunities for you.
               </p>
             </div>
 
@@ -161,21 +158,20 @@ export default function Home() {
               )}
             >
               <div className="absolute -top-4 bg-[#ffe600] text-black font-bold py-1 px-4 rounded-full text-sm shadow-md">
-                STEP 2: NOTIFY
+                STEP 2: RESULTS
               </div>
               <div className="mb-6 p-4 rounded-full bg-[#ffe600] text-black shadow-lg">
                 <Bell size={40} />
               </div>
-              <h3 className="text-xl font-bold mb-2">Get Trigger Alerts</h3>
+              <h3 className="text-xl font-bold mb-2">Get Real Results</h3>
               <p
                 className={cn(
                   "text-sm",
                   isDark ? "text-white" : "text-slate-600",
                 )}
               >
-                Receive an email when we find "Fresh Opportunity" (new
-                businesses) or "Pain Points" (businesses with bad recent
-                reviews).
+                Get real results for "Fresh Opportunity" (new businesses) or
+                "Pain Points" (businesses with bad reviews, or other problems).
               </p>
             </div>
           </div>
@@ -205,8 +201,8 @@ export default function Home() {
                 isDark ? "text-white" : "text-slate-600",
               )}
             >
-              Our AI logic automatically tags leads as "Missed Call" or
-              "Chatbot" opportunities based on customer complaints.
+              Our AI logic automatically tags leads as "Bad Reviews" or "Need
+              Website" opportunities based on customer complaints.
             </p>
           </div>
 
@@ -228,7 +224,7 @@ export default function Home() {
                 isDark ? "text-white" : "text-slate-600",
               )}
             >
-              Don't waste time hunting. Unlock verified owner emails with a
+              Don't waste time searching. Unlock verified owner emails with a
               single click using your monthly credits.
             </p>
           </div>
@@ -244,15 +240,15 @@ export default function Home() {
             <div className="h-10 w-10 bg-[#ffe600] rounded-lg flex items-center justify-center mb-4 text-black shadow-md">
               <Target size={20} />
             </div>
-            <h3 className="text-xl font-bold mb-2">Strategic Scripts</h3>
+            <h3 className="text-xl font-bold mb-2">Stra tegic Scripts</h3>
             <p
               className={cn(
                 "text-sm",
                 isDark ? "text-white" : "text-slate-600",
               )}
             >
-              Get a custom AI-generated sales pitch for every lead, referencing
-              their specific pain point or opening date.
+              Get a custom sales pitch for every lead, referencing their
+              specific pain point or opening date.
             </p>
           </div>
         </div>
@@ -281,8 +277,8 @@ export default function Home() {
               )}
             >
               We use AI and Scraper tools to ensure your lead data is fresh
-              (recently scraped) and your tags are accurate. No more 3-year-old
-              CSV files.
+              (recently scraped) and emails are verified. No more 3-year-old CSV
+              files.
             </p>
           </div>
         </div>
