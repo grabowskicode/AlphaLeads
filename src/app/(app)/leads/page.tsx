@@ -95,21 +95,22 @@ export default function LeadsPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto pt-14 pb-20 space-y-8">
+    <div className="w-[95%] md:w-[90%] lg:w-[80%] mx-auto pt-6 md:pt-14 pb-20 space-y-6 md:space-y-8">
       {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          {/* CTO FIX: Removed Icon here */}
-          <h1 className="text-3xl font-bold text-white">Lead Database</h1>
-          <p className="text-zinc-400 mt-2">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 flex-wrap">
+        <div className="min-w-[200px]">
+          <h1 className="text-2xl md:text-3xl font-bold text-white">
+            Lead Database
+          </h1>
+          <p className="text-zinc-400 mt-2 text-sm md:text-base">
             You have <strong className="text-white">{leads.length}</strong>{" "}
             total Leads found.
           </p>
         </div>
 
         <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-          {/* Search */}
-          <div className="relative flex-1 md:w-64">
+          {/* Search - Flexible width */}
+          <div className="relative w-full md:w-64 shrink-0">
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"
               size={16}
@@ -122,90 +123,110 @@ export default function LeadsPage() {
             />
           </div>
 
-          {/* UNLOCK ALL BUTTON */}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                disabled={unlockCost === 0}
-                className={`font-bold ${unlockCost > 0 ? "!bg-[#ffe600] !text-black hover:!bg-[#ffe600]/90" : "bg-zinc-800 text-zinc-500"}`}
-              >
-                <Unlock size={16} className="mr-2" />
-                {unlockCost > 0 ? `Unlock All (${unlockCost})` : "All Unlocked"}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Unlock {unlockCost} Leads?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Cost:{" "}
-                  <span className="text-[#ffe600] font-bold">
-                    {unlockCost} Credits
-                  </span>
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleBulkUnlock}
-                  disabled={userCredits < unlockCost}
-                  className="!bg-[#ffe600] !text-black font-bold"
+          {/* ACTION BUTTONS GROUP */}
+          <div className="grid grid-cols-2 md:flex gap-3 w-full md:w-auto">
+            {/* UNLOCK ALL BUTTON */}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  disabled={unlockCost === 0}
+                  className={`font-bold w-full md:w-auto ${
+                    unlockCost > 0
+                      ? "!bg-[#ffe600] !text-black hover:!bg-[#ffe600]/90"
+                      : "bg-zinc-800 text-zinc-500"
+                  }`}
                 >
-                  Confirm
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                  <Unlock size={16} className="mr-2 shrink-0" />
+                  <span className="truncate">
+                    {unlockCost > 0
+                      ? `Unlock All (${unlockCost})`
+                      : "All Unlocked"}
+                  </span>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    Unlock {unlockCost} Leads?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Cost:{" "}
+                    <span className="text-[#ffe600] font-bold">
+                      {unlockCost} Credits
+                    </span>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleBulkUnlock}
+                    disabled={userCredits < unlockCost}
+                    className="!bg-[#ffe600] !text-black font-bold"
+                  >
+                    Confirm
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
 
-          {/* DOWNLOAD BUTTON */}
-          <Button
-            onClick={handleExport}
-            variant="outline"
-            className="border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800"
-          >
-            <Download size={16} className="mr-2" />
-            Export CSV
-          </Button>
+            {/* DOWNLOAD BUTTON */}
+            <Button
+              onClick={handleExport}
+              variant="outline"
+              className="w-full md:w-auto border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800 shrink-0"
+            >
+              <Download size={16} className="mr-2 shrink-0" />
+              Export
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* TABS SYSTEM */}
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="bg-[#0b0a0b] border border-zinc-800 p-1 h-auto rounded-xl flex flex-col md:flex-row gap-2">
+          {/* ALL LEADS - YELLOW */}
           <TabsTrigger
             value="all"
-            className="data-[state=active]:bg-zinc-800 data-[state=active]:text-white text-zinc-400 px-6 py-2.5 rounded-lg"
+            // UPDATED: Added 'group' class to parent
+            className="group data-[state=active]:bg-[#ffe600] data-[state=active]:text-black text-zinc-400 px-6 py-2.5 rounded-lg w-full md:w-auto justify-start md:justify-center"
           >
             <LayoutGrid size={16} className="mr-2" />
             All Leads
+            {/* UPDATED: Badge logic */}
             <Badge
               variant="secondary"
-              className="ml-2 bg-black/40 text-current text-[10px]"
+              // Default: bg-white/20 (visible when inactive)
+              // Active: group-data-[state=active]:bg-black/20 (darker when on yellow)
+              className="ml-auto md:ml-2 bg-white/20 group-data-[state=active]:bg-black/20 text-current text-[10px]"
             >
               {filteredLeads.length}
             </Badge>
           </TabsTrigger>
 
+          {/* FRESH / NEEDS WEBSITE - BLUE */}
           <TabsTrigger
             value="fresh"
-            className="data-[state=active]:bg-[#ffe600] data-[state=active]:text-black text-zinc-400 px-6 py-2.5 rounded-lg"
+            className="data-[state=active]:bg-blue-500 data-[state=active]:text-white text-zinc-400 px-6 py-2.5 rounded-lg w-full md:w-auto justify-start md:justify-center"
           >
             Needs Website
             <Badge
               variant="secondary"
-              className="ml-2 bg-white/20 text-current text-[10px]"
+              className="ml-auto md:ml-2 bg-white/20 text-current text-[10px]"
             >
               {freshLeads.length}
             </Badge>
           </TabsTrigger>
 
+          {/* PAIN / BAD REVIEWS - RED */}
           <TabsTrigger
             value="pain"
-            className="data-[state=active]:bg-red-500 data-[state=active]:text-white text-zinc-400 px-6 py-2.5 rounded-lg"
+            className="data-[state=active]:bg-red-500 data-[state=active]:text-white text-zinc-400 px-6 py-2.5 rounded-lg w-full md:w-auto justify-start md:justify-center"
           >
             Bad Reviews
             <Badge
               variant="secondary"
-              className="ml-2 bg-white/20 text-current text-[10px]"
+              className="ml-auto md:ml-2 bg-white/20 text-current text-[10px]"
             >
               {painLeads.length}
             </Badge>
@@ -219,18 +240,22 @@ export default function LeadsPage() {
 
           <TabsContent value="fresh" className="m-0 focus-visible:outline-none">
             <div className="mb-4 p-4 border border-blue-500/20 bg-blue-500/5 rounded-xl text-blue-400 text-sm flex items-center gap-2">
-              <Filter size={16} />
-              Showing <strong>Fresh Opportunities</strong>: Businesses with no
-              website or unclaimed profiles.
+              <Filter size={16} className="shrink-0" />
+              <span>
+                Showing <strong>Fresh Opportunities</strong>: Businesses with no
+                website or unclaimed profiles.
+              </span>
             </div>
             <LeadFeed leads={freshLeads} />
           </TabsContent>
 
           <TabsContent value="pain" className="m-0 focus-visible:outline-none">
             <div className="mb-4 p-4 border border-red-500/20 bg-red-500/5 rounded-xl text-red-400 text-sm flex items-center gap-2">
-              <Filter size={16} />
-              Showing <strong>Pain Points</strong>: Businesses with bad reviews,
-              low ratings, or low number of ratings.
+              <Filter size={16} className="shrink-0" />
+              <span>
+                Showing <strong>Pain Points</strong>: Businesses with bad
+                reviews, low ratings, or low number of ratings.
+              </span>
             </div>
             <LeadFeed leads={painLeads} />
           </TabsContent>

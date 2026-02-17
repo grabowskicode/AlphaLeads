@@ -18,6 +18,7 @@ import {
   Lock,
   Play,
   Activity,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -34,32 +35,23 @@ export default function Home() {
   }
 
   // --- DASHBOARD THEME EXTRACTION ---
-  // Background: Pure Black (from layout.tsx)
-  // Cards: #0b0a0b (from dashboard/page.tsx)
-  // Borders: zinc-800 (from dashboard/page.tsx)
-
   const cardStyle = cn(
-    "relative p-8 rounded-2xl border flex flex-col items-start text-left transition-all duration-300 hover:border-[#ffe600]/30",
-    "bg-[#0b0a0b] border-zinc-800",
+    "group relative p-8 rounded-2xl border flex flex-col items-start text-left transition-all duration-300 hover:border-[#ffe600]/30 overflow-hidden",
+    "bg-white/5 border-zinc-800 shadow-sm",
   );
-
-  const iconContainerStyle =
-    "h-12 w-12 bg-[#ffe600]/10 border border-[#ffe600]/20 rounded-xl flex items-center justify-center mb-6 text-[#ffe600]";
 
   return (
     <div className="min-h-screen flex flex-col font-sans bg-black text-white selection:bg-[#ffe600] selection:text-black">
       {/* --- NAVIGATION BAR --- */}
       <header className="sticky top-6 z-50 mx-auto flex w-[90%] max-w-5xl items-center justify-between px-6 py-3 rounded-full border border-zinc-800 bg-[#0b0a0b]/80 backdrop-blur-md shadow-xl">
-        <div className="flex items-center gap-2 text-xl font-bold tracking-tight">
-          <span>
-            Alpha<span className="text-[#ffe600]">Leads</span>
-          </span>
+        <div className="flex items-center gap-2 font-bold tracking-tight">
+          <span className="text-2xl text-[#ffff]">AlphaLeads</span>
         </div>
 
-        <nav className="flex items-center gap-4 text-sm font-medium">
+        <nav className="flex items-center gap-4 font-medium">
           <Link
             href="/#how-it-works"
-            className="hidden md:block text-zinc-400 hover:text-[#ffe600] transition-colors"
+            className="hidden md:block text-base text-zinc-400 hover:text-[#ffe600] transition-colors"
           >
             How it works
           </Link>
@@ -67,16 +59,18 @@ export default function Home() {
           <Button
             asChild
             size="sm"
-            className="!bg-[#ffe600] !text-black font-bold rounded-full hover:!bg-[#ffe600]/90 transition-all shadow-[0_0_15px_rgba(255,230,0,0.3)]"
+            className="!bg-[#ffe600] !text-black font-bold text-base rounded-full hover:!bg-[#ffe600]/90 transition-all shadow-[0_0_15px_rgba(255,230,0,0.3)] px-6"
           >
             <Link href="/login">Log in</Link>
           </Button>
         </nav>
       </header>
 
-      <main className="flex-1 mx-auto flex w-full max-w-6xl flex-col items-center justify-start px-4 py-16 text-center">
+      {/* UPDATED: Reduced py-16 to py-12 */}
+      <main className="flex-1 mx-auto flex w-full max-w-6xl flex-col items-center justify-start px-4 py-12 text-center">
         {/* --- HERO SECTION --- */}
-        <div className="mx-auto max-w-4xl space-y-8 mb-16 mt-8">
+        {/* UPDATED: Reduced mb-16 to mb-12 */}
+        <div className="mx-auto max-w-4xl space-y-8 mb-12 mt-8">
           <h1 className="text-balance text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl text-white">
             Hunt the <span className="text-[#ffe600]">1% of Businesses</span>{" "}
             That Needs You.
@@ -113,37 +107,27 @@ export default function Home() {
           </div>
         </div>
 
-        {/* --- DEMO VIDEO SECTION (NEW) --- */}
-        <div className="w-full max-w-5xl mb-32 relative z-10">
+        {/* --- DEMO VIDEO SECTION --- */}
+        {/* UPDATED: Reduced mb-32 to mb-20 */}
+        <div className="w-full max-w-5xl mb-20 relative z-10">
           <div className="relative aspect-video w-full rounded-2xl border border-zinc-800 bg-[#0b0a0b] overflow-hidden shadow-2xl group cursor-pointer hover:border-[#ffe600]/50 transition-colors">
-            {/* Placeholder Background (Simulates Dashboard UI) */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-zinc-900 to-[#0b0a0b] flex items-center justify-center">
-              <div className="text-center z-10">
-                <div className="h-20 w-20 bg-[#ffe600] rounded-full flex items-center justify-center mx-auto mb-4 shadow-[0_0_30px_rgba(255,230,0,0.4)] group-hover:scale-110 transition-transform duration-300">
-                  <Play fill="black" className="ml-1 h-8 w-8 text-black" />
-                </div>
-                <p className="text-white font-medium tracking-wide">
-                  Watch Demo
-                </p>
-              </div>
-            </div>
-
-            {/* If you have a real video, uncomment this:
             <video
-              src="/demo.mp4"
-              className="h-full w-full object-cover"
-              controls
-              poster="/poster.png"
-            />
-            */}
+              className="w-full h-full object-cover"
+              autoPlay
+              loop
+              muted
+              playsInline
+            >
+              <source src="/demo.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
           </div>
-
-          {/* Glow Effect behind video */}
           <div className="absolute -inset-1 bg-gradient-to-r from-[#ffe600]/10 via-[#ffe600]/5 to-[#ffe600]/10 blur-3xl -z-10 rounded-[3rem] opacity-30"></div>
         </div>
 
         {/* --- HOW IT WORKS (The Sniper Logic) --- */}
-        <div id="how-it-works" className="w-full max-w-5xl mb-32 scroll-mt-32">
+        {/* UPDATED: Reduced mb-32 to mb-20 */}
+        <div id="how-it-works" className="w-full max-w-5xl mb-20 scroll-mt-32">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4 text-white">
               The "Sniper" Logic
@@ -156,65 +140,70 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Step 1 */}
             <div className={cardStyle}>
-              <div className="absolute top-6 right-6 text-zinc-800">
-                <Search size={60} strokeWidth={1} />
+              {/* Ghost Icon */}
+              <div className="absolute -right-6 -top-6 text-white/5 transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110">
+                <Search size={100} />
               </div>
-              <div className={iconContainerStyle}>
-                <span className="font-bold text-xl">1</span>
+              <div className="relative z-10">
+                <Search size={32} className="text-[#ffe600] mb-4" />
+                <h3 className="text-xl font-bold mb-2 text-white">
+                  1. The Wide Scan
+                </h3>
+                <p className="text-sm leading-relaxed text-zinc-400">
+                  You enter a niche (e.g. "Roofers in Miami"). Our engine checks
+                  hundreds of Google Maps listings in seconds to gather raw
+                  data.
+                </p>
               </div>
-              <h3 className="text-xl font-bold mb-2 text-white">
-                The Wide Scan
-              </h3>
-              <p className="text-sm leading-relaxed text-zinc-400">
-                You enter a niche (e.g. "Roofers in Miami"). Our engine checks
-                hundreds of Google Maps listings in seconds to gather raw data.
-              </p>
             </div>
 
             {/* Step 2 */}
             <div className={cardStyle}>
-              <div className="absolute top-6 right-6 text-zinc-800">
-                <ShieldCheck size={60} strokeWidth={1} />
+              {/* Ghost Icon */}
+              <div className="absolute -right-6 -top-6 text-white/5 transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110">
+                <Trash2 size={100} />
               </div>
-              <div className={iconContainerStyle}>
-                <span className="font-bold text-xl">2</span>
+              <div className="relative z-10">
+                <Trash2 size={32} className="text-[#ffe600] mb-4" />
+                <h3 className="text-xl font-bold mb-2 text-white">
+                  2. The "Kill" Filter
+                </h3>
+                <p className="text-sm leading-relaxed text-zinc-400">
+                  We automatically <strong>discard</strong> successful
+                  businesses (4.9+ rating, verified, good website). It's hard to
+                  sell to them, so you don't pay for these leads.
+                </p>
               </div>
-              <h3 className="text-xl font-bold mb-2 text-white">
-                The "Kill" Filter
-              </h3>
-              <p className="text-sm leading-relaxed text-zinc-400">
-                We automatically <strong>discard</strong> successful businesses
-                (4.9+ rating, verified, good website). It's hard to sell to
-                them, so you don't pay for these leads.
-              </p>
             </div>
 
             {/* Step 3 */}
             <div className={cardStyle}>
-              <div className="absolute top-6 right-6 text-zinc-800">
-                <Target size={60} strokeWidth={1} />
+              {/* Ghost Icon */}
+              <div className="absolute -right-6 -top-6 text-white/5 transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110">
+                <Target size={100} />
               </div>
-              <div className={iconContainerStyle}>
-                <span className="font-bold text-xl">3</span>
+              <div className="relative z-10">
+                <Target size={32} className="text-[#ffe600] mb-4" />
+                <h3 className="text-xl font-bold mb-2 text-white">
+                  3. The Opportunity
+                </h3>
+                <p className="text-sm leading-relaxed text-zinc-400">
+                  You only see "Distressed" businesses:
+                  <br />
+                  <span className="text-[#ffe600]">• Low Ratings</span> (Need
+                  Reputation)
+                  <br />
+                  <span className="text-[#ffe600]">• No Website</span> (Need
+                  Design)
+                </p>
               </div>
-              <h3 className="text-xl font-bold mb-2 text-white">
-                The Opportunity
-              </h3>
-              <p className="text-sm leading-relaxed text-zinc-400">
-                You only see "Distressed" businesses:
-                <br />
-                <span className="text-[#ffe600]">• Low Ratings</span> (Need
-                Reputation)
-                <br />
-                <span className="text-[#ffe600]">• No Website</span> (Need
-                Design)
-              </p>
             </div>
           </div>
         </div>
 
         {/* --- FEATURES GRID --- */}
-        <div id="features" className="w-full max-w-5xl mb-32">
+        {/* UPDATED: Reduced mb-32 to mb-20 */}
+        <div id="features" className="w-full max-w-5xl mb-20">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4 text-white">
               Intelligence Features
@@ -227,58 +216,71 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Feature 1 */}
             <div className={cardStyle}>
-              <div className={iconContainerStyle}>
-                <Mail size={24} />
+              <div className="absolute -right-6 -top-6 text-white/5 transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110">
+                <Mail size={120} />
               </div>
-              <h3 className="text-xl font-bold mb-2 text-white">
-                Verified Owner Emails
-              </h3>
-              <p className="text-sm text-zinc-400">
-                We don't just scrape garbage, we cross-reference data to find
-                personal emails of decision-makers, verified instantly.
-              </p>
+              <div className="relative z-10">
+                <Mail size={32} className="text-[#ffe600] mb-4" />
+                <h3 className="text-xl font-bold mb-2 text-white">
+                  Verified Owner Emails
+                </h3>
+                <p className="text-sm text-zinc-400">
+                  We don't just scrape garbage, we cross-reference data to find
+                  personal emails of decision-makers, verified instantly.
+                </p>
+              </div>
             </div>
 
             {/* Feature 2 */}
             <div className={cardStyle}>
-              <div className={iconContainerStyle}>
-                <Zap size={24} />
+              <div className="absolute -right-6 -top-6 text-white/5 transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110">
+                <Zap size={120} />
               </div>
-              <h3 className="text-xl font-bold mb-2 text-white">
-                AI Pitch Generator
-              </h3>
-              <p className="text-sm text-zinc-400">
-                One-click AI scripts that reference the business's specific bad
-                review or missing website. "I saw your 1-star review about..."
-              </p>
+              <div className="relative z-10">
+                <Zap size={32} className="text-[#ffe600] mb-4" />
+                <h3 className="text-xl font-bold mb-2 text-white">
+                  AI Pitch Generator
+                </h3>
+                <p className="text-sm text-zinc-400">
+                  One-click AI scripts that reference the business's specific
+                  bad review or missing website. "I saw your 1-star review
+                  about..."
+                </p>
+              </div>
             </div>
 
             {/* Feature 3 */}
             <div className={cardStyle}>
-              <div className={iconContainerStyle}>
-                <Bell size={24} />
+              <div className="absolute -right-6 -top-6 text-white/5 transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110">
+                <Bell size={120} />
               </div>
-              <h3 className="text-xl font-bold mb-2 text-white">
-                "Fresh" Monitors
-              </h3>
-              <p className="text-sm text-zinc-400">
-                Set a monitor for "Dentists". We'll email you the moment a NEW
-                dentist opens or gets a bad review. Be the first to pitch.
-              </p>
+              <div className="relative z-10">
+                <Bell size={32} className="text-[#ffe600] mb-4" />
+                <h3 className="text-xl font-bold mb-2 text-white">
+                  "Fresh" Monitors
+                </h3>
+                <p className="text-sm text-zinc-400">
+                  Set a monitor for "Dentists". We'll email you the moment a NEW
+                  dentist opens or gets a bad review. Be the first to pitch.
+                </p>
+              </div>
             </div>
 
             {/* Feature 4 */}
             <div className={cardStyle}>
-              <div className={iconContainerStyle}>
-                <Lock size={24} />
+              <div className="absolute -right-6 -top-6 text-white/5 transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110">
+                <Lock size={120} />
               </div>
-              <h3 className="text-xl font-bold mb-2 text-white">
-                Risk-Free Guarantee
-              </h3>
-              <p className="text-sm text-zinc-400">
-                If a scan returns 0 qualified leads (market saturation), we
-                automatically refund your credits instantly. You never lose.
-              </p>
+              <div className="relative z-10">
+                <Lock size={32} className="text-[#ffe600] mb-4" />
+                <h3 className="text-xl font-bold mb-2 text-white">
+                  Risk-Free Guarantee
+                </h3>
+                <p className="text-sm text-zinc-400">
+                  If a scan returns 0 qualified leads (market saturation), we
+                  automatically refund your credits instantly. You never lose.
+                </p>
+              </div>
             </div>
           </div>
         </div>

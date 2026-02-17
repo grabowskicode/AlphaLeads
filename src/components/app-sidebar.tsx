@@ -28,12 +28,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-// FIX: Import the data provider hook
 import { useData } from "@/context/data-provider";
 
 export function AppSidebar() {
   const pathname = usePathname();
-  // FIX: Get real credits and email from context
   const { userCredits, userEmail } = useData();
   const credits = userCredits ?? 0;
 
@@ -45,13 +43,11 @@ export function AppSidebar() {
     <Sidebar
       variant="floating"
       collapsible="icon"
+      style={{ "--sidebar-width": "15.5rem" } as React.CSSProperties}
       className="m-4 h-[calc(100vh-2rem)] rounded-3xl border border-white/10 bg-[#0b0a0b]/90 shadow-2xl backdrop-blur-2xl [&_[data-sidebar=sidebar]]:!bg-transparent [&_[data-sidebar=sidebar]]:!border-none"
     >
-      <SidebarHeader className="border-b border-white/5 p-6">
-        <h1 className="flex items-center gap-3 text-xl font-bold tracking-tight text-white">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#ffe600] text-black shadow-[0_0_15px_rgba(255,230,0,0.4)]">
-            <div className="h-4 w-4 rounded-full bg-black" />
-          </div>
+      <SidebarHeader className="border-b border-white/5 p-4">
+        <h1 className="text-2xl font-bold tracking-tight text-white">
           AlphaLeads
         </h1>
       </SidebarHeader>
@@ -66,7 +62,6 @@ export function AppSidebar() {
             <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
               Credits
             </span>
-            <Coins size={16} className="text-[#ffe600]" />
           </div>
           <div className="text-4xl font-bold text-white tracking-tight">
             {credits}
@@ -99,7 +94,7 @@ export function AppSidebar() {
                       tooltip={item.label}
                       className={`h-12 w-full rounded-2xl transition-all duration-300 ${
                         isActive
-                          ? "bg-[#ffe600] text-black shadow-[0_0_20px_rgba(255,230,0,0.4)] hover:bg-[#ffe600]"
+                          ? "!bg-[#ffe600] !text-black shadow-[0_0_20px_rgba(255,230,0,0.4)] hover:!bg-[#ffe600] hover:!text-black"
                           : "text-zinc-400 hover:bg-white/10 hover:text-white"
                       }`}
                     >
@@ -109,7 +104,8 @@ export function AppSidebar() {
                       >
                         <item.icon
                           size={20}
-                          className={isActive ? "text-black" : "text-current"}
+                          // Also forcing the icon to stay black when active
+                          className={isActive ? "!text-black" : "text-current"}
                         />
                         <span className="font-semibold tracking-wide">
                           {item.label}
@@ -129,12 +125,10 @@ export function AppSidebar() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="group flex w-full items-center gap-3 rounded-2xl border border-transparent bg-transparent p-2 transition-all hover:bg-white/5">
-              {/* FIX: Icon uses first 2 letters of email */}
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-800 border border-zinc-700 font-bold text-white transition-colors group-hover:border-[#ffe600]">
                 {userInitials}
               </div>
 
-              {/* FIX: Display ONLY the email address */}
               <div className="flex-1 text-left min-w-0">
                 <p className="truncate text-sm font-bold text-white">
                   {displayEmail}

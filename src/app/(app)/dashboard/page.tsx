@@ -80,16 +80,22 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pt-14 pb-20">
+    <div className="w-[95%] md:w-[90%] lg:w-[80%] mx-auto space-y-6 md:space-y-8 pt-6 md:pt-14 pb-20">
       {/* SECTION 1: STATS */}
       <div className="space-y-6">
-        <h2 className="text-3xl font-bold text-white">Dashboard</h2>
+        <h2 className="text-2xl md:text-3xl font-bold text-white">Dashboard</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((stat, i) => (
             <div
               key={i}
-              className="group relative overflow-hidden bg-[#0b0a0b] border border-zinc-800 p-6 rounded-2xl shadow-sm hover:border-[#ffe600]/30 transition-all"
+              // UPDATED: Changed bg-[#0b0a0b] to bg-white/5 for a lighter grey "glass" look
+              className="group relative overflow-hidden bg-white/5 border border-zinc-800 p-6 rounded-2xl shadow-sm hover:border-[#ffe600]/30 transition-all"
             >
+              {/* Ghost Icon Effect */}
+              <div className="absolute -right-6 -top-6 text-white/5 transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110">
+                <stat.icon size={100} />
+              </div>
+
               <div className="relative z-10">
                 <p className="text-zinc-500 text-sm font-medium uppercase tracking-wider flex items-center gap-2">
                   <stat.icon size={16} className={stat.color} />
@@ -106,18 +112,20 @@ export default function DashboardPage() {
 
       {/* SECTION 2: ACTIVE MONITORS */}
       <div className="space-y-4">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <Radio size={20} className="text-[#ffe600]" />
             Active Scans Monitor
           </h2>
-          <div className="bg-[#ffe600] rounded-full text-black font-bold shadow-lg shadow-[#ffe600]/20 transition-all hover:bg-[#ffe600]/90">
-            <AddMonitorDialog />
+          <div className="w-full md:w-auto bg-[#ffe600] rounded-full text-black font-bold shadow-lg shadow-[#ffe600]/20 transition-all hover:bg-[#ffe600]/90">
+            <div className="w-full md:w-auto flex justify-center">
+              <AddMonitorDialog />
+            </div>
           </div>
         </div>
 
-        <div className="bg-[#0b0a0b] border border-zinc-800 rounded-xl overflow-hidden">
-          <table className="w-full text-sm text-left">
+        <div className="bg-[#0b0a0b] border border-zinc-800 rounded-xl overflow-x-auto">
+          <table className="w-full text-sm text-left min-w-[600px]">
             <thead className="text-xs text-zinc-500 uppercase bg-zinc-900/50 border-b border-zinc-800">
               <tr>
                 <th className="px-6 py-3">Keyword</th>
@@ -254,20 +262,20 @@ export default function DashboardPage() {
 
       {/* QUICK LINK */}
       <div className="flex justify-end pt-2">
-        <Link href="/leads">
+        <Link href="/leads" className="w-full md:w-auto">
           <Button
             variant="outline"
-            className="text-zinc-400 hover:text-white border-zinc-700"
+            className="w-full md:w-auto text-zinc-400 hover:text-white border-zinc-700"
           >
             View All Leads →
           </Button>
         </Link>
       </div>
 
-      {/* CONSOLE */}
-      <div className="space-y-4 pt-4">
-        <ConsoleWindow />
-      </div>
+      {/* CONSOLE - COMMENTED OUT TEMPORARILY */}
+      {/* <div className="space-y-4 pt-4">
+              <ConsoleWindow />
+            </div> */}
     </div>
   );
 }
