@@ -53,7 +53,7 @@ export default function Home() {
             href="/#how-it-works"
             className="hidden md:block text-base text-zinc-400 hover:text-[#ffe600] transition-colors"
           >
-            How it works
+            How it works:
           </Link>
 
           <Button
