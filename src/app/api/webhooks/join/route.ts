@@ -17,11 +17,11 @@ export async function POST(req: Request) {
       await supabaseAdmin.auth.admin.inviteUserByEmail(email);
     if (authError) throw authError;
 
-    // 2. Add them to the profiles table
-    const { error: dbError } = await supabaseAdmin.from("profiles").upsert({
+    // 2. Add them to the users table
+    const { error: dbError } = await supabaseAdmin.from("users").upsert({
       id: authData.user.id,
       email,
-      join_date: new Date().toISOString(),
+      created_at: new Date().toISOString(),
       is_active: true,
     });
 

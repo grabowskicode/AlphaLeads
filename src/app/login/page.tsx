@@ -272,8 +272,16 @@ export default function LoginPage() {
               />
               <p className="text-xs text-zinc-500 dark:text-zinc-400 text-left">
                 <strong>Invite Only:</strong> Public registration is disabled.
-                Please check your email for an invite from the Skool community
-                admin.
+                Please check your email for an invite from the{" "}
+                <a
+                  href="https://www.skool.com/alphaleads-4585"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors"
+                >
+                  Skool
+                </a>{" "}
+                community admin.
               </p>
             </div>
           </div>

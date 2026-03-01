@@ -7,7 +7,7 @@ export async function GET(req: Request) {
 
     // 1. Find all active users whose expiration date is today or earlier
     const { data: expiredUsers, error: fetchError } = await supabaseAdmin
-      .from("profiles")
+      .from("users")
       .select("id")
       .lte("access_expires_at", today)
       .eq("is_active", true);
@@ -24,7 +24,7 @@ export async function GET(req: Request) {
         ban_duration: "876000h",
       });
       await supabaseAdmin
-        .from("profiles")
+        .from("users")
         .update({ is_active: false })
         .eq("id", user.id);
     }

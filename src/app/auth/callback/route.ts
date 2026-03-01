@@ -1,22 +1,50 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-  const requestUrl = new URL(request.url);
-  const code = requestUrl.searchParams.get('code');
-  const next = requestUrl.searchParams.get('next') || '/dashboard';
+  const { searchParams, origin } = new URL(request.url);
+  const code = searchParams.get("code");
+
+  // Default routing them to the update-password page on their first login
+  const next = searchParams.get("next") ?? "/update-password";
 
   if (code) {
     const cookieStore = await cookies();
-    
-    // A TypeScript hibát elnémítjuk, mert a könyvtár típusa még nem frissült Next.js 15-höz,
-    // de a működés így helyes (átadjuk a már betöltött cookieStore-t).
-    // @ts-ignore
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-    
-    await supabase.auth.exchangeCodeForSession(code);
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+          set(name: string, value: string, options: CookieOptions) {
+            try {
+              cookieStore.set({ name, value, ...options });
+            } catch (error) {
+              // Handle edge case where cookies can't be set during routing
+            }
+          },
+          remove(name: string, options: CookieOptions) {
+            try {
+              cookieStore.set({ name, value: "", ...options });
+            } catch (error) {
+              // Handle edge case where cookies can't be set during routing
+            }
+          },
+        },
+      },
+    );
+
+    // This securely exchanges the 1-time link for a real, logged-in session
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (!error) {
+      return NextResponse.redirect(`${origin}${next}`);
+    }
   }
 
-  return NextResponse.redirect(`${requestUrl.origin}${next}`);
+  // If they try to click an expired or used link, send them back to login
+  return NextResponse.redirect(`${origin}/login?error=Invalid+or+expired+link`);
 }
