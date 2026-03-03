@@ -16,21 +16,21 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 
-// ÚJ: Prop típus definíció
+// Prop type definition
 interface UserNavProps {
   user?: User | null;
 }
 
-// MÓDOSÍTÁS: Elfogadjuk a user prop-ot
 export function UserNav({ user }: UserNavProps) {
   const router = useRouter();
-  // Ha kaptunk usert a szervertől, azt használjuk alapból (nincs villanás)
   const [userEmail, setUserEmail] = useState(user?.email || "user@example.com");
+
+  // NEW: Add a loading state to prevent spam-clicking and show feedback
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const supabase = createClientComponentClient();
 
   useEffect(() => {
-    // Ha már megvan a user a props-ból, nem kérdezzük le újra feleslegesen
     if (user?.email) return;
 
     const getUser = async () => {
@@ -44,14 +44,23 @@ export function UserNav({ user }: UserNavProps) {
     getUser();
   }, [supabase, user]);
 
-  const handleLogout = async (e: Event | React.MouseEvent) => {
-    // PREVENT DROPDOWN FROM UNMOUNTING BEFORE SIGNOUT FINISHES
+  const handleLogout = async (e: Event) => {
+    // 1. Keep the dropdown open while it processes
     e.preventDefault();
 
-    await supabase.auth.signOut();
+    if (isLoggingOut) return; // Prevent double clicks
+    setIsLoggingOut(true);
 
-    // HARD REDIRECT: Bypasses Next.js cache completely and forces a clean state
-    window.location.href = "/login";
+    try {
+      // 2. Attempt the official sign out
+      await supabase.auth.signOut();
+    } catch (error) {
+      // If it fails silently behind the scenes, log it but don't stop!
+      console.error("Supabase logout error:", error);
+    } finally {
+      // 3. THIS ALWAYS RUNS: Force the browser to dump cache and go to login
+      window.location.href = "/login";
+    }
   };
 
   return (
@@ -94,10 +103,11 @@ export function UserNav({ user }: UserNavProps) {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onSelect={handleLogout} // onSelect is the correct event for Shadcn/Radix dropdowns!
-          className="cursor-pointer focus:bg-primary focus:text-primary-foreground"
+          onSelect={handleLogout}
+          disabled={isLoggingOut}
+          className="cursor-pointer focus:bg-primary focus:text-primary-foreground text-red-500 focus:text-red-500"
         >
-          Log out
+          {isLoggingOut ? "Logging out..." : "Log out"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
