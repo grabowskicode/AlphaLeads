@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,12 +9,12 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useEffect, useState } from 'react';
-import type { User } from '@supabase/supabase-js';
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 
 // ÚJ: Prop típus definíció
 interface UserNavProps {
@@ -25,7 +25,7 @@ interface UserNavProps {
 export function UserNav({ user }: UserNavProps) {
   const router = useRouter();
   // Ha kaptunk usert a szervertől, azt használjuk alapból (nincs villanás)
-  const [userEmail, setUserEmail] = useState(user?.email || 'user@example.com');
+  const [userEmail, setUserEmail] = useState(user?.email || "user@example.com");
 
   const supabase = createClientComponentClient();
 
@@ -34,7 +34,9 @@ export function UserNav({ user }: UserNavProps) {
     if (user?.email) return;
 
     const getUser = async () => {
-      const { data: { user: fetchedUser } } = await supabase.auth.getUser();
+      const {
+        data: { user: fetchedUser },
+      } = await supabase.auth.getUser();
       if (fetchedUser && fetchedUser.email) {
         setUserEmail(fetchedUser.email);
       }
@@ -42,11 +44,14 @@ export function UserNav({ user }: UserNavProps) {
     getUser();
   }, [supabase, user]);
 
-  const handleLogout = async () => {
+  const handleLogout = async (e: Event | React.MouseEvent) => {
+    // PREVENT DROPDOWN FROM UNMOUNTING BEFORE SIGNOUT FINISHES
+    e.preventDefault();
+
     await supabase.auth.signOut();
-    router.refresh();
-    // MÓDOSÍTÁS: replace használata push helyett (gyorsabb előzménkezelés)
-    router.replace('/login');
+
+    // HARD REDIRECT: Bypasses Next.js cache completely and forces a clean state
+    window.location.href = "/login";
   };
 
   return (
@@ -57,7 +62,9 @@ export function UserNav({ user }: UserNavProps) {
           className="w-full max-w-[85%] mx-auto rounded-3xl border border-slate-200 dark:border-white/20 bg-white/60 dark:bg-black/60 backdrop-blur-2xl transition-all duration-300 hover:scale-[1.02] hover:bg-white/70 dark:hover:bg-black/70 active:scale-[0.98] h-12"
         >
           <Avatar className="h-8 w-8 mr-2">
-            <AvatarFallback>{userEmail.substring(0, 2).toUpperCase()}</AvatarFallback>
+            <AvatarFallback>
+              {userEmail.substring(0, 2).toUpperCase()}
+            </AvatarFallback>
           </Avatar>
           <span className="text-sm font-medium truncate">{userEmail}</span>
         </Button>
@@ -87,7 +94,7 @@ export function UserNav({ user }: UserNavProps) {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={handleLogout}
+          onSelect={handleLogout} // onSelect is the correct event for Shadcn/Radix dropdowns!
           className="cursor-pointer focus:bg-primary focus:text-primary-foreground"
         >
           Log out
