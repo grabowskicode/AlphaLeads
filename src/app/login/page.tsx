@@ -131,6 +131,7 @@ export default function LoginPage() {
       router.refresh();
       router.push("/dashboard");
       router.refresh();
+      router.push("/dashboard");
     }
   };
 
