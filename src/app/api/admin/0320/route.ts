@@ -42,8 +42,19 @@ export async function POST(req: Request) {
     await resend.emails.send({
       from: "AlphaLeads <noreply@help.alphaleads.app>",
       to: email,
-      subject: "Your AlphaLeads Account Details",
-      text: `Welcome to AlphaLeads!\n\nYour account has been securely created. Please log in using the following details:\n\nEmail: ${email}\nPassword: ${tempPassword}\n\nYou will be prompted to change this password immediately after logging in.\n\nBest,\nVincent`,
+      subject: "your AlphaLeads account details",
+      text: `Welcome to AlphaLeads!
+
+    Your account has been securely created. Please log in here:
+    https://www.alphaleads.app/login
+
+    Email: ${email}
+    Password: ${tempPassword}
+
+    You will be prompted to change this password immediately after logging in.
+
+    Best,
+    Vincent`,
     });
 
     return NextResponse.json({ success: true, password: tempPassword });
