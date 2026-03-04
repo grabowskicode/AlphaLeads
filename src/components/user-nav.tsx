@@ -25,7 +25,7 @@ export function UserNav({ user }: UserNavProps) {
   const router = useRouter();
   const [userEmail, setUserEmail] = useState(user?.email || "user@example.com");
 
-  // NEW: Add a loading state to prevent spam-clicking and show feedback
+  // Loading state to prevent spam-clicking and show feedback
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const supabase = createClientComponentClient();
@@ -52,13 +52,12 @@ export function UserNav({ user }: UserNavProps) {
     setIsLoggingOut(true);
 
     try {
-      // 2. Attempt the official sign out
-      await supabase.auth.signOut();
+      // 2. Call our new server-side API to destroy the secure Next.js cookie
+      await fetch("/api/auth/signout", { method: "POST" });
     } catch (error) {
-      // If it fails silently behind the scenes, log it but don't stop!
-      console.error("Supabase logout error:", error);
+      console.error("Signout API error:", error);
     } finally {
-      // 3. THIS ALWAYS RUNS: Force the browser to dump cache and go to login
+      // 3. Force the browser to dump cache and go to login
       window.location.href = "/login";
     }
   };
