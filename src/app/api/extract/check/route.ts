@@ -231,7 +231,7 @@ export async function POST(req: Request) {
       }
 
       // --- 6. Save Leads ---
-      addLog(`✅ Saving ${validLeads.length} leads...`);
+      addLog(`Saving ${validLeads.length} leads...`);
 
       const { error: upsertError } = await supabaseAdmin
         .from("leads")

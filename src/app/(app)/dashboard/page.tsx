@@ -88,7 +88,6 @@ export default function DashboardPage() {
           {stats.map((stat, i) => (
             <div
               key={i}
-              // UPDATED: Changed bg-[#0b0a0b] to bg-white/5 for a lighter grey "glass" look
               className="group relative overflow-hidden bg-white/5 border border-zinc-800 p-6 rounded-2xl shadow-sm hover:border-[#ffe600]/30 transition-all"
             >
               {/* Ghost Icon Effect */}
@@ -272,10 +271,10 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      {/* CONSOLE - COMMENTED OUT TEMPORARILY */}
-      {/* <div className="space-y-4 pt-4">
-              <ConsoleWindow />
-            </div> */}
+      {/* CONSOLE WINDOW */}
+      <div className="space-y-4 pt-4">
+        <ConsoleWindow />
+      </div>
     </div>
   );
 }

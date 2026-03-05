@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useTransition } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,21 +12,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
-// Prop type definition
+// IMPORT OUR NEW SERVER ACTION!
+import { logoutUser } from "@/app/actions";
+
 interface UserNavProps {
   user?: User | null;
 }
 
 export function UserNav({ user }: UserNavProps) {
-  const router = useRouter();
   const [userEmail, setUserEmail] = useState(user?.email || "user@example.com");
 
-  // Loading state to prevent spam-clicking and show feedback
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  // This is the Next.js way to handle loading states for Server Actions
+  const [isPending, startTransition] = useTransition();
 
   const supabase = createClientComponentClient();
 
@@ -43,24 +43,6 @@ export function UserNav({ user }: UserNavProps) {
     };
     getUser();
   }, [supabase, user]);
-
-  const handleLogout = async (e: Event) => {
-    // 1. Keep the dropdown open while it processes
-    e.preventDefault();
-
-    if (isLoggingOut) return; // Prevent double clicks
-    setIsLoggingOut(true);
-
-    try {
-      // 2. Call our new server-side API to destroy the secure Next.js cookie
-      await fetch("/api/auth/signout", { method: "POST" });
-    } catch (error) {
-      console.error("Signout API error:", error);
-    } finally {
-      // 3. Force the browser to dump cache and go to login
-      window.location.href = "/login";
-    }
-  };
 
   return (
     <DropdownMenu>
@@ -101,12 +83,20 @@ export function UserNav({ user }: UserNavProps) {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
+
+        {/* THIS IS WHERE THE MAGIC HAPPENS */}
         <DropdownMenuItem
-          onSelect={handleLogout}
-          disabled={isLoggingOut}
+          disabled={isPending}
+          onClick={(e) => {
+            e.preventDefault(); // Keep menu open
+            // Trigger the server action in the background
+            startTransition(() => {
+              logoutUser();
+            });
+          }}
           className="cursor-pointer focus:bg-primary focus:text-primary-foreground text-red-500 focus:text-red-500"
         >
-          {isLoggingOut ? "Logging out..." : "Log out"}
+          {isPending ? "Logging out..." : "Log out"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -10,7 +10,9 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = createServerComponentClient({ cookies });
+  // THE FIX: We await the cookies first so Next.js doesn't complain!
+  const cookieStore = await cookies();
+  const supabase = createServerComponentClient({ cookies: () => cookieStore });
 
   // 1. Get the current user session
   const {
@@ -19,7 +21,6 @@ export default async function AppLayout({
 
   // 2. If they are logged in, check the database flag
   if (session) {
-    // We added the error variable here and the console logs below it
     const { data: userData, error } = await supabase
       .from("users")
       .select("needs_password_change")

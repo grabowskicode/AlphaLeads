@@ -69,7 +69,7 @@ export async function POST(req: Request) {
     // 4. EXECUTE SCRAPE
     const apiKey = process.env.OUTSCRAPER_API_KEY;
     const searchQuery = `${keyword} in ${location}`;
-    addLog(`🚀 STARTING JOB: "${searchQuery}" (-${COST} credits)`);
+    addLog(`STARTING JOB: "${searchQuery}" (-${COST} credits)`);
 
     const apiUrl = `https://api.app.outscraper.com/maps/search-v2?query=${encodeURIComponent(
       searchQuery,
