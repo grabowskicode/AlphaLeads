@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   Radio,
   Target,
@@ -32,47 +31,6 @@ import Link from "next/link";
 export default function DashboardPage() {
   const { leads, monitors, deleteMonitor, startScrape, scansThisMonth } =
     useData();
-
-  // State to track which specific scan is currently being checked
-  const [isChecking, setIsChecking] = useState<string | null>(null);
-
-  // --- NEW: The Pull Method Handler ---
-  const handleCheckStatus = async (requestId: string) => {
-    if (!requestId) {
-      alert("Error: No Request ID found for this scan.");
-      return;
-    }
-
-    setIsChecking(requestId);
-    try {
-      const res = await fetch("/api/extract/check", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId }),
-      });
-
-      const data = await res.json();
-
-      if (data.status === "PENDING") {
-        alert("Outscraper is still scraping... give it another minute.");
-      } else if (data.status === "SUCCESS") {
-        alert(`Success! Found ${data.count} qualified leads.`);
-        window.location.reload();
-      } else if (data.status === "ZERO_RESULTS") {
-        alert(
-          "Scan finished, but no leads met your strict criteria. Credits refunded!",
-        );
-        window.location.reload();
-      } else {
-        alert(`Status: ${data.status} - ${data.message || "Check console"}`);
-      }
-    } catch (error) {
-      console.error("Failed to check status", error);
-      alert("Something went wrong checking the status.");
-    } finally {
-      setIsChecking(null);
-    }
-  };
 
   // --- 1. METRIC: Total Leads ---
   const totalLeads = leads.length;
@@ -255,24 +213,10 @@ export default function DashboardPage() {
                           </AlertDialogContent>
                         </AlertDialog>
                       ) : (
-                        /* REPLACED: Active Check Status Button */
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={isChecking === m.request_id}
-                          // Make sure m.request_id matches your exact database column for the Outscraper ID
-                          onClick={() => handleCheckStatus(m.request_id)}
-                          className="text-[#ffe600] border-[#ffe600]/30 bg-[#ffe600]/10 hover:bg-[#ffe600]/20 hover:text-[#ffe600] transition-all"
-                        >
-                          {isChecking === m.request_id ? (
-                            <Loader2 className="animate-spin mr-2" size={14} />
-                          ) : (
-                            <Activity className="mr-2" size={14} />
-                          )}
-                          {isChecking === m.request_id
-                            ? "Checking..."
-                            : "Check Status"}
-                        </Button>
+                        <div className="flex items-center text-[#ffe600] text-xs font-bold px-3">
+                          <Loader2 className="animate-spin mr-2" size={14} />
+                          Scraping...
+                        </div>
                       )}
 
                       {/* DELETE BUTTON */}
