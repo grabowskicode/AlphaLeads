@@ -20,10 +20,7 @@ export async function POST(req: Request) {
 
     const [city, areasString] = location.split(" | ");
     if (!city || !areasString) {
-      return NextResponse.json(
-        { error: "Invalid location format." },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Invalid location format." }, { status: 400 });
     }
     const selectedAreas = areasString.split(",").map((a: string) => a.trim());
 
@@ -34,61 +31,31 @@ export async function POST(req: Request) {
       .in("admin2", selectedAreas);
 
     if (zipError || !zipData || zipData.length === 0) {
-      return NextResponse.json(
-        { error: "Could not map zip codes for this area." },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Could not map zip codes." }, { status: 400 });
     }
 
     const zipCodes = zipData.map((z) => z.zip_code);
-
-    if (zipCodes.length > 50) {
-      return NextResponse.json(
-        { error: "Maximum of 50 zip codes exceeded." },
-        { status: 400 },
-      );
-    }
-
     const MAX_RESULTS_TOTAL = 500;
-    const dynamicLimit = Math.max(
-      5,
-      Math.floor(MAX_RESULTS_TOTAL / zipCodes.length),
-    );
+    const dynamicLimit = Math.max(5, Math.floor(MAX_RESULTS_TOTAL / zipCodes.length));
 
     const { error: rpcError } = await supabase.rpc("start_scan_transaction", {
       p_user_id: userId,
     });
 
-    if (rpcError) {
-      return NextResponse.json({ error: rpcError.message }, { status: 403 });
-    }
+    if (rpcError) return NextResponse.json({ error: rpcError.message }, { status: 403 });
 
-    const searchQueries = zipCodes
-      .map((zip) => `${keyword} in ${zip}`)
-      .join(",");
-    addLog(
-      `STARTING ASYNC JOB: ${zipCodes.length} zips for "${keyword}" (1 Scan consumed)`,
-    );
+    const searchQueries = zipCodes.map((zip) => `${keyword} in ${zip}`).join(",");
+    addLog(`STARTING ASYNC JOB: ${zipCodes.length} zips for "${keyword}"`);
 
-    // --- FIX: Bulletproof URL Generation ---
-<<<<<<< HEAD
-    let appUrl =
-      process.env.NEXT_PUBLIC_APP_URL || "https://www.alphaleads.app";
-    if (appUrl.endsWith("/")) {
-      appUrl = appUrl.slice(0, -1); // Strip trailing slash to prevent Vercel redirects
-=======
-    let appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.alphaleads.app";
-    if (appUrl.endsWith('/')) {
-        appUrl = appUrl.slice(0, -1); // Strip trailing slash to prevent Vercel redirects
->>>>>>> 358a8acc23c4ca7700b883515f6def29c65a451c
-    }
+    // No webhook needed in Polling mode
+    const apiUrl = `https://api.app.outscraper.com/maps/search-v2?query=${encodeURIComponent(searchQueries)}&limit=${dynamicLimit}&async=true`;
 
-    const webhookToken = process.env.WEBHOOK_SECRET;
-    if (!webhookToken)
-      throw new Error("Server configuration error: Missing WEBHOOK_SECRET");
-
-    // Put token FIRST in the query string to prevent Outscraper truncation
-    const webhookUrl = `${appUrl}/api/webhooks/outscraper?token=${webhookToken}&userId=${userId}&keyword=${encodeURIComponent(keyword)}`;
+    const response = await fetch(apiUrl, {
+      headers: { "X-API-KEY": process.env.OUTSCRAPER_API_KEY! },
+    });
+    
+    // --- THE FIX: Define 'data' here ---
+    const data = await response.json();
 
     if (!data.id) {
       await supabase.rpc("refund_scan", { p_user_id: userId });
