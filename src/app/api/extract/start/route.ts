@@ -70,12 +70,18 @@ export async function POST(req: Request) {
       `STARTING ASYNC JOB: ${zipCodes.length} zips for "${keyword}" (1 Scan consumed)`,
     );
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:9002";
+    // --- FIX: Bulletproof URL Generation ---
+    let appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:9002";
+    if (appUrl.endsWith('/')) {
+        appUrl = appUrl.slice(0, -1); // Strip trailing slash to prevent Vercel redirects
+    }
+    
     const webhookToken = process.env.WEBHOOK_SECRET;
     if (!webhookToken)
       throw new Error("Server configuration error: Missing WEBHOOK_SECRET");
 
-    const webhookUrl = `${appUrl}/api/webhooks/outscraper?userId=${userId}&keyword=${encodeURIComponent(keyword)}&token=${webhookToken}`;
+    // Put token FIRST in the query string to prevent Outscraper truncation
+    const webhookUrl = `${appUrl}/api/webhooks/outscraper?token=${webhookToken}&userId=${userId}&keyword=${encodeURIComponent(keyword)}`;
 
     const apiUrl = `https://api.app.outscraper.com/maps/search-v2?query=${encodeURIComponent(searchQueries)}&limit=${dynamicLimit}&async=true&webhookUrl=${encodeURIComponent(webhookUrl)}`;
 
