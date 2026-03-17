@@ -24,7 +24,7 @@ interface DataContextType {
   startScrape: (monitor: Monitor) => Promise<void>;
   unlockLead: (leadId: string) => Promise<void>;
   unlockAllLeads: (leadIds: string[]) => Promise<void>;
-  clearLeads: () => Promise<void>; // NEW: Added to interface
+  clearLeads: () => Promise<void>;
   clearData: () => Promise<void>;
   deleteMonitor: (monitorId: string) => Promise<void>;
   updateMonitor: (
@@ -122,9 +122,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // --- 3. START SCRAPE (V2 ASYNC ARCHITECTURE) ---
+  // --- 3. START SCRAPE (V2 POLLING ARCHITECTURE) ---
   const startScrape = async (monitor: Monitor) => {
-    // 1. Optimistically set the UI to active so the user can't double-click
+    // 1. Optimistically set the UI to active
     setMonitors((prev) =>
       prev.map((m) => (m.id === monitor.id ? { ...m, status: "active" } : m)),
     );
@@ -141,34 +141,63 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       const startData = await startRes.json();
 
-      // If the backend rejects it (e.g. not enough credits for the dynamic hold)
       if (!startRes.ok) {
         throw new Error(startData.error || "Failed to start");
       }
 
-      // 2. Fetch data immediately to sync the new pre-charge deduction from the database
       await fetchData();
 
-      // 3. Inform the user of the new background process
       toast({
         title: "Background Scan Started 🚀",
-        description:
-          "Your scan is running safely in the background. We reserved the max credits and will auto-refund the difference when finished. You can close this tab or check back in 10-20 minutes.",
-        duration: 10000, // Show for 10 seconds
+        description: "Your scan is running safely. Please keep this tab open—we will automatically grab the leads when finished.",
+        duration: 8000, 
       });
+
+      // --- THE POLLING LOOP ---
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const checkInterval = setInterval(async () => {
+        try {
+          const checkRes = await fetch(`/api/extract/check?requestId=${startData.requestId}&userId=${user.id}`);
+          const checkData = await checkRes.json();
+
+          // If the task is finished (either success or fail)
+          if (checkData.status === "completed" || checkData.status === "failed") {
+            clearInterval(checkInterval); // Stop asking
+            
+            if (checkData.status === "completed") {
+              toast({
+                title: "Scan Complete! 🎉",
+                description: `Successfully processed and saved your new leads.`,
+              });
+            } else {
+              toast({
+                title: "Scan Failed",
+                description: "Outscraper could not find any data. Scan refunded.",
+                variant: "destructive",
+              });
+            }
+
+            // Set UI back to ready and fetch the new leads
+            setMonitors((prev) =>
+              prev.map((m) => (m.id === monitor.id ? { ...m, status: "paused" } : m))
+            );
+            await fetchData(); 
+          }
+        } catch (err) {
+          console.error("Error checking status:", err);
+        }
+      }, 15000); // Checks every 15 seconds
+
     } catch (error: any) {
       console.error(error);
-
-      // Force Sync to ensure we match DB
       await fetchData();
-
       toast({
         title: "Scan Failed",
         description: error.message,
         variant: "destructive",
       });
-
-      // Revert UI to paused
       setMonitors((prev) =>
         prev.map((m) => (m.id === monitor.id ? { ...m, status: "paused" } : m)),
       );
@@ -314,7 +343,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         startScrape,
         unlockLead,
         unlockAllLeads,
-        clearLeads, // NEW: Exposed via provider
+        clearLeads,
         clearData,
         deleteMonitor,
         updateMonitor,
