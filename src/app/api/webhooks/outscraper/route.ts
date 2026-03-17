@@ -13,11 +13,9 @@ export async function POST(req: Request) {
 
     const token = searchParams.get("token");
     if (token !== process.env.WEBHOOK_SECRET) {
-      console.error("CRITICAL: Unauthorized webhook attempt blocked.");
-      return NextResponse.json(
-        { error: "Unauthorized access" },
-        { status: 401 },
-      );
+      // 🚨 THE X-RAY LOG 🚨
+      console.error(`AUTH FAIL -> Received: [${token}] | Expected: [${process.env.WEBHOOK_SECRET}]`);
+      return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
     }
 
     const userId = searchParams.get("userId");
@@ -44,10 +42,7 @@ export async function POST(req: Request) {
       if (userId) {
         await supabaseAdmin.rpc("refund_scan", { p_user_id: userId });
       }
-      return NextResponse.json({
-        success: true,
-        message: "No actionable businesses found. Scan refunded.",
-      });
+      return NextResponse.json({ success: true, message: "No actionable businesses found. Scan refunded." });
     }
 
     const formattedLeads = badBusinesses.map((lead: any) => ({
@@ -106,10 +101,7 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      savedLeads: formattedLeads.length,
-    });
+    return NextResponse.json({ success: true, savedLeads: formattedLeads.length });
   } catch (error: any) {
     console.error("Webhook Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
