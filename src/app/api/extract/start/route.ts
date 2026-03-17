@@ -71,10 +71,16 @@ export async function POST(req: Request) {
     );
 
     // --- FIX: Bulletproof URL Generation ---
+<<<<<<< HEAD
     let appUrl =
       process.env.NEXT_PUBLIC_APP_URL || "https://www.alphaleads.app";
     if (appUrl.endsWith("/")) {
       appUrl = appUrl.slice(0, -1); // Strip trailing slash to prevent Vercel redirects
+=======
+    let appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.alphaleads.app";
+    if (appUrl.endsWith('/')) {
+        appUrl = appUrl.slice(0, -1); // Strip trailing slash to prevent Vercel redirects
+>>>>>>> 358a8acc23c4ca7700b883515f6def29c65a451c
     }
 
     const webhookToken = process.env.WEBHOOK_SECRET;
