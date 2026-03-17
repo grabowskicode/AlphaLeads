@@ -77,13 +77,6 @@ export async function POST(req: Request) {
 
     const webhookUrl = `${appUrl}/api/webhooks/outscraper?userId=${userId}&keyword=${encodeURIComponent(keyword)}&token=${webhookToken}`;
 
-    const apiUrl = `https://api.app.outscraper.com/maps/search-v2?query=${encodeURIComponent(searchQueries)}&limit=${dynamicLimit}&async=true&webhookUrl=${encodeURIComponent(webhookUrl)}`;
-
-    const response = await fetch(apiUrl, {
-      headers: { "X-API-KEY": process.env.OUTSCRAPER_API_KEY! },
-    });
-    const data = await response.json();
-
     if (!data.id) {
       await supabase.rpc("refund_scan", { p_user_id: userId });
       throw new Error("Outscraper API Failed. Scan Refunded.");
