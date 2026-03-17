@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     );
 
     // --- FIX: Bulletproof URL Generation ---
-    let appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:9002";
+    let appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.alphaleads.app";
     if (appUrl.endsWith('/')) {
         appUrl = appUrl.slice(0, -1); // Strip trailing slash to prevent Vercel redirects
     }
