@@ -71,11 +71,12 @@ export async function POST(req: Request) {
     );
 
     // --- FIX: Bulletproof URL Generation ---
-    let appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:9002";
-    if (appUrl.endsWith('/')) {
-        appUrl = appUrl.slice(0, -1); // Strip trailing slash to prevent Vercel redirects
+    let appUrl =
+      process.env.NEXT_PUBLIC_APP_URL || "https://www.alphaleads.app";
+    if (appUrl.endsWith("/")) {
+      appUrl = appUrl.slice(0, -1); // Strip trailing slash to prevent Vercel redirects
     }
-    
+
     const webhookToken = process.env.WEBHOOK_SECRET;
     if (!webhookToken)
       throw new Error("Server configuration error: Missing WEBHOOK_SECRET");
