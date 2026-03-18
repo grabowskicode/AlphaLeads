@@ -29,13 +29,16 @@ export async function GET(req: Request) {
 
     const taskData = await response.json();
 
-    // 2. If it's still running, just tell the frontend to keep waiting
-    if (taskData.status === "Pending" || taskData.status === "Processing") {
+    // 🚨 THE FIX: Force the status to uppercase so it always matches 🚨
+    const currentStatus = taskData.status ? taskData.status.toUpperCase() : "UNKNOWN";
+
+    // 2. Keep Waiting
+    if (currentStatus === "PENDING" || currentStatus === "PROCESSING") {
       return NextResponse.json({ status: "pending" });
     }
 
-    // 3. If it failed on their end, refund the user
-    if (taskData.status === "Failure") {
+    // 3. Handle Failure
+    if (currentStatus === "FAILURE") {
       await supabaseAdmin.rpc("refund_scan", { p_user_id: userId });
       await supabaseAdmin
         .from("processed_requests")
@@ -44,8 +47,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ status: "failed" });
     }
 
-    // 4. If Success, process the data immediately!
-    if (taskData.status === "Success" && taskData.data) {
+    // 4. Handle Success
+    if (currentStatus === "SUCCESS" && taskData.data) {
       let allLeads: any[] = [];
       taskData.data.forEach((queryGroup: any) => {
         if (Array.isArray(queryGroup)) allLeads = allLeads.concat(queryGroup);
@@ -111,7 +114,10 @@ export async function GET(req: Request) {
       });
     }
 
+    // If it reaches here, log the unknown data so we can see what Outscraper sent
+    console.error("UNHANDLED OUTSCRAPER RESPONSE:", taskData);
     return NextResponse.json({ status: "unknown" });
+    
   } catch (error: any) {
     console.error("Manual Check Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
