@@ -151,7 +151,7 @@ export default function TrialPage() {
                 />
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 text-left">
                   <strong>Risk-Free Trial:</strong> You will instantly receive
-                  20 free credits to test the platform. No credit card required.
+                  150 free credits to test the platform. No credit card required.
                 </p>
               </div>
             </div>
