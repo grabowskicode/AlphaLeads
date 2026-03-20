@@ -38,28 +38,34 @@ export async function POST(req: Request) {
     const MAX_RESULTS_TOTAL = 500;
     const dynamicLimit = Math.max(5, Math.floor(MAX_RESULTS_TOTAL / zipCodes.length));
 
+    // --- CREDIT SYSTEM FIX ---
+    // Ensure this RPC function in Supabase exists and is deducting 100 credits
     const { error: rpcError } = await supabase.rpc("start_scan_transaction", {
       p_user_id: userId,
     });
 
-    if (rpcError) return NextResponse.json({ error: rpcError.message }, { status: 403 });
+    if (rpcError) {
+      addLog(`CREDIT ERROR: ${rpcError.message}`);
+      return NextResponse.json({ error: rpcError.message }, { status: 403 });
+    }
 
     const searchQueries = zipCodes.map((zip) => `${keyword} in ${zip}`).join(",");
-    addLog(`STARTING ASYNC JOB: ${zipCodes.length} zips for "${keyword}"`);
+    addLog(`STARTING ENRICHED SCAN: ${zipCodes.length} zips for "${keyword}"`);
 
-    // No webhook needed in Polling mode
-    // Corrected Code
-const apiUrl = `https://api.app.outscraper.com/maps/search-v2?query=${encodeURIComponent(searchQueries)}&limit=${dynamicLimit}&async=true&domains_service=true`;
+    // --- EMAIL ENHANCEMENT FIX ---
+    // Added '&domains_service=true' to trigger Outscraper's email/contact enrichment
+    const apiUrl = `https://api.app.outscraper.com/maps/search-v2?query=${encodeURIComponent(searchQueries)}&limit=${dynamicLimit}&async=true&domains_service=true`;
 
     const response = await fetch(apiUrl, {
       headers: { "X-API-KEY": process.env.OUTSCRAPER_API_KEY! },
     });
     
-    // --- THE FIX: Define 'data' here ---
     const data = await response.json();
 
     if (!data.id) {
+      // Refund if the API fails to start
       await supabase.rpc("refund_scan", { p_user_id: userId });
+      addLog(`OUTSCRAPER FAIL: Scan Refunded.`);
       throw new Error("Outscraper API Failed. Scan Refunded.");
     }
 
