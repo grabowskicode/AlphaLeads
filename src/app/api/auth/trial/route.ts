@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     const { error: dbError } = await supabaseAdmin.from("users").upsert({
       id: userId,
       email: email,
-      credits: 20,
+      credits: 150,
       scans_this_month: 0,
       tier: "free",
       needs_password_change: false,
