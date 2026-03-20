@@ -6,55 +6,67 @@ import { addLog } from "@/lib/logger";
 export async function POST(req: Request) {
   try {
     const { keyword, location } = await req.json();
-
     const cookieStore = await cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    
     const userId = session.user.id;
+    const SCAN_COST = 100;
 
-    const [city, areasString] = location.split(" | ");
-    if (!city || !areasString) {
-      return NextResponse.json({ error: "Invalid location format." }, { status: 400 });
+    // --- 1. CHECK CURRENT CREDITS ---
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("credits")
+      .eq("id", userId)
+      .single();
+
+    if (userError || !userData) {
+      return NextResponse.json({ error: "User profile not found." }, { status: 404 });
     }
+
+    if (userData.credits < SCAN_COST) {
+      addLog(`INSUFFICIENT CREDITS: User ${userId} tried to scan.`);
+      return NextResponse.json({ error: "Insufficient credits (100 required)." }, { status: 403 });
+    }
+
+    // --- 2. DEDUCT CREDITS IN CODE ---
+    const newBalance = userData.credits - SCAN_COST;
+    const { error: updateError } = await supabase
+      .from("users")
+      .update({ credits: newBalance })
+      .eq("id", userId);
+
+    if (updateError) {
+      return NextResponse.json({ error: "Failed to process credit transaction." }, { status: 500 });
+    }
+
+    // --- 3. PREPARE GEOGRAPHIC DATA ---
+    const [city, areasString] = location.split(" | ");
     const selectedAreas = areasString.split(",").map((a: string) => a.trim());
 
-    const { data: zipData, error: zipError } = await supabase
+    const { data: zipData } = await supabase
       .from("postal_codes")
       .select("zip_code")
       .ilike("city", `%${city}%`)
       .in("admin2", selectedAreas);
 
-    if (zipError || !zipData || zipData.length === 0) {
+    if (!zipData || zipData.length === 0) {
+      // Refund if zip mapping fails
+      await supabase.from("users").update({ credits: userData.credits }).eq("id", userId);
       return NextResponse.json({ error: "Could not map zip codes." }, { status: 400 });
     }
 
     const zipCodes = zipData.map((z) => z.zip_code);
-    const MAX_RESULTS_TOTAL = 500;
-    const dynamicLimit = Math.max(5, Math.floor(MAX_RESULTS_TOTAL / zipCodes.length));
-
-    // --- CREDIT SYSTEM FIX ---
-    // Ensure this RPC function in Supabase exists and is deducting 100 credits
-    const { error: rpcError } = await supabase.rpc("start_scan_transaction", {
-      p_user_id: userId,
-    });
-
-    if (rpcError) {
-      addLog(`CREDIT ERROR: ${rpcError.message}`);
-      return NextResponse.json({ error: rpcError.message }, { status: 403 });
-    }
-
     const searchQueries = zipCodes.map((zip) => `${keyword} in ${zip}`).join(",");
-    addLog(`STARTING ENRICHED SCAN: ${zipCodes.length} zips for "${keyword}"`);
+    const dynamicLimit = Math.max(5, Math.floor(500 / zipCodes.length));
 
-    // --- EMAIL ENHANCEMENT FIX ---
-    // Added '&domains_service=true' to trigger Outscraper's email/contact enrichment
+    // --- 4. START OUTSCRAPER (WITH EMAIL ENHANCEMENT) ---
+    // Added 'domains_service=true' to fix the email issue
     const apiUrl = `https://api.app.outscraper.com/maps/search-v2?query=${encodeURIComponent(searchQueries)}&limit=${dynamicLimit}&async=true&domains_service=true`;
+
+    addLog(`DEDUCTED ${SCAN_COST} CREDITS. Starting enriched scan for ${zipCodes.length} zips.`);
 
     const response = await fetch(apiUrl, {
       headers: { "X-API-KEY": process.env.OUTSCRAPER_API_KEY! },
@@ -63,12 +75,13 @@ export async function POST(req: Request) {
     const data = await response.json();
 
     if (!data.id) {
-      // Refund if the API fails to start
-      await supabase.rpc("refund_scan", { p_user_id: userId });
-      addLog(`OUTSCRAPER FAIL: Scan Refunded.`);
-      throw new Error("Outscraper API Failed. Scan Refunded.");
+      // Refund credits if the API call itself fails
+      await supabase.from("users").update({ credits: userData.credits }).eq("id", userId);
+      addLog(`OUTSCRAPER FAILED. Credits refunded to user.`);
+      return NextResponse.json({ error: "Outscraper failed to initiate." }, { status: 502 });
     }
 
+    // Track the request
     await supabase.from("processed_requests").insert({
       request_id: data.id,
       user_id: userId,
@@ -77,7 +90,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, requestId: data.id });
   } catch (error: any) {
-    console.error("Start Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Critical Start Error:", error);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }
