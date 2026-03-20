@@ -194,7 +194,7 @@ export default function DashboardPage() {
                                 onClick={() => startScrape(m)}
                                 className="!bg-[#ffe600] !text-black hover:!bg-[#ffe600]/90 font-bold border-none"
                               >
-                                Confirm (100 Credits)
+                                Confirm
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
