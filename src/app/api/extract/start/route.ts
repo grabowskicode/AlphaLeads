@@ -80,8 +80,6 @@ export async function POST(req: Request) {
 
     const searchQueries = zipCodes.map((zip) => `${keyword} in ${zip}`).join(",");
     const dynamicLimit = Math.max(5, Math.floor(500 / zipCodes.length));
-    addLog(`[OUTSCRAPER] Parameters set: Limit=${dynamicLimit} leads per zip code.`);
-
     // --- 3. NETWORK PHASE ---
     addLog(`[NETWORK] Dispatching request with Contact & Email Enrichment...`);
     const apiUrl = `https://api.app.outscraper.com/maps/search-v2?query=${encodeURIComponent(searchQueries)}&limit=${dynamicLimit}&async=true&domains_service=true`;
@@ -97,9 +95,6 @@ export async function POST(req: Request) {
       await supabaseAdmin.from("users").update({ credits: userData.credits }).eq("id", userId);
       return NextResponse.json({ error: "Outscraper failed." }, { status: 502 });
     }
-
-    addLog(`[SUCCESS] Task accepted. Outscraper ID: ${data.id}`);
-
     // --- 4. TRACKING PHASE ---
     addLog(`[DATABASE] Registering pending request for background monitoring...`);
     await supabase.from("processed_requests").insert({
