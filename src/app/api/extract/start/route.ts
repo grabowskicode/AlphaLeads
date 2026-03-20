@@ -48,7 +48,8 @@ export async function POST(req: Request) {
     addLog(`STARTING ASYNC JOB: ${zipCodes.length} zips for "${keyword}"`);
 
     // No webhook needed in Polling mode
-    const apiUrl = `https://api.app.outscraper.com/maps/search-v2?query=${encodeURIComponent(searchQueries)}&limit=${dynamicLimit}&async=true`;
+    // Corrected Code
+const apiUrl = `https://api.app.outscraper.com/maps/search-v2?query=${encodeURIComponent(searchQueries)}&limit=${dynamicLimit}&async=true&domains_service=true`;
 
     const response = await fetch(apiUrl, {
       headers: { "X-API-KEY": process.env.OUTSCRAPER_API_KEY! },
