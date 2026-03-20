@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { addLog } from "@/lib/logger";
+// Import the admin client to bypass RLS for credit updates
+import { supabaseAdmin } from "@/lib/supabase-admin"; 
 
 export async function POST(req: Request) {
   try {
@@ -9,40 +11,47 @@ export async function POST(req: Request) {
     const cookieStore = await cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
+    // 1. Authenticate the user
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     
     const userId = session.user.id;
     const SCAN_COST = 100;
 
-    // --- 1. CHECK CURRENT CREDITS ---
-    const { data: userData, error: userError } = await supabase
+    addLog(`TRANSACTION START: Checking credits for user ${userId}`);
+
+    // 2. CHECK CREDITS (Using Admin Client for reliability)
+    const { data: userData, error: userError } = await supabaseAdmin
       .from("users")
       .select("credits")
       .eq("id", userId)
       .single();
 
     if (userError || !userData) {
+      addLog(`ERROR: User profile not found in database.`);
       return NextResponse.json({ error: "User profile not found." }, { status: 404 });
     }
 
     if (userData.credits < SCAN_COST) {
-      addLog(`INSUFFICIENT CREDITS: User ${userId} tried to scan.`);
+      addLog(`REJECTED: Insufficient credits. Has: ${userData.credits}, Needs: ${SCAN_COST}`);
       return NextResponse.json({ error: "Insufficient credits (100 required)." }, { status: 403 });
     }
 
-    // --- 2. DEDUCT CREDITS IN CODE ---
+    // 3. DEDUCT CREDITS (Using Admin Client to bypass RLS)
     const newBalance = userData.credits - SCAN_COST;
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from("users")
       .update({ credits: newBalance })
       .eq("id", userId);
 
     if (updateError) {
-      return NextResponse.json({ error: "Failed to process credit transaction." }, { status: 500 });
+      addLog(`DB ERROR: Credit deduction failed: ${updateError.message}`);
+      return NextResponse.json({ error: "Credit transaction failed." }, { status: 500 });
     }
 
-    // --- 3. PREPARE GEOGRAPHIC DATA ---
+    addLog(`SUCCESS: Deducted ${SCAN_COST} credits. New balance: ${newBalance}`);
+
+    // 4. PREPARE GEOGRAPHIC DATA
     const [city, areasString] = location.split(" | ");
     const selectedAreas = areasString.split(",").map((a: string) => a.trim());
 
@@ -53,8 +62,9 @@ export async function POST(req: Request) {
       .in("admin2", selectedAreas);
 
     if (!zipData || zipData.length === 0) {
-      // Refund if zip mapping fails
-      await supabase.from("users").update({ credits: userData.credits }).eq("id", userId);
+      // Automatic Refund if geographic mapping fails
+      await supabaseAdmin.from("users").update({ credits: userData.credits }).eq("id", userId);
+      addLog(`REFUNDED: Could not map zip codes for ${location}.`);
       return NextResponse.json({ error: "Could not map zip codes." }, { status: 400 });
     }
 
@@ -62,11 +72,8 @@ export async function POST(req: Request) {
     const searchQueries = zipCodes.map((zip) => `${keyword} in ${zip}`).join(",");
     const dynamicLimit = Math.max(5, Math.floor(500 / zipCodes.length));
 
-    // --- 4. START OUTSCRAPER (WITH EMAIL ENHANCEMENT) ---
-    // Added 'domains_service=true' to fix the email issue
+    // 5. START OUTSCRAPER (With Email Enhancement active)
     const apiUrl = `https://api.app.outscraper.com/maps/search-v2?query=${encodeURIComponent(searchQueries)}&limit=${dynamicLimit}&async=true&domains_service=true`;
-
-    addLog(`DEDUCTED ${SCAN_COST} CREDITS. Starting enriched scan for ${zipCodes.length} zips.`);
 
     const response = await fetch(apiUrl, {
       headers: { "X-API-KEY": process.env.OUTSCRAPER_API_KEY! },
@@ -75,18 +82,20 @@ export async function POST(req: Request) {
     const data = await response.json();
 
     if (!data.id) {
-      // Refund credits if the API call itself fails
-      await supabase.from("users").update({ credits: userData.credits }).eq("id", userId);
-      addLog(`OUTSCRAPER FAILED. Credits refunded to user.`);
+      // Automatic Refund if Outscraper API fails to launch
+      await supabaseAdmin.from("users").update({ credits: userData.credits }).eq("id", userId);
+      addLog(`REFUNDED: Outscraper API failed to initiate.`);
       return NextResponse.json({ error: "Outscraper failed to initiate." }, { status: 502 });
     }
 
-    // Track the request
+    // 6. Track the request
     await supabase.from("processed_requests").insert({
       request_id: data.id,
       user_id: userId,
       status: "pending",
     });
+
+    addLog(`SCAN ACTIVE: Request ID ${data.id} is now processing.`);
 
     return NextResponse.json({ success: true, requestId: data.id });
   } catch (error: any) {
