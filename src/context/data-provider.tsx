@@ -122,12 +122,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateMonitor = async (
+    monitorId: string,
+    updates: Partial<Monitor>,
+  ) => {
+    await supabase.from("monitors").update(updates).eq("id", monitorId);
+    setMonitors((prev) =>
+      prev.map((m) => (m.id === monitorId ? { ...m, ...updates } : m)),
+    );
+  };
+
   // --- 3. START SCRAPE (V2 POLLING ARCHITECTURE) ---
   const startScrape = async (monitor: Monitor) => {
-    // 1. Optimistically set the UI to running
-    setMonitors((prev) =>
-      prev.map((m) => (m.id === monitor.id ? { ...m, status: "running" } : m)),
-    );
+    // 1. Optimistically set the UI and DB to running
+    await updateMonitor(monitor.id, { status: "running" });
 
     try {
       const startRes = await fetch("/api/extract/start", {
@@ -158,6 +166,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (!user) return;
 
       let currentRequestId = startData.requestId;
+      let currentDbStatus = "running"; // Track DB state to avoid spamming Supabase
 
       const checkInterval = setInterval(async () => {
         try {
@@ -166,23 +175,25 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
           // PHASE 0: MAPS SCRAPE RUNNING
           if (checkData.status === "pending" || checkData.status === "processing") {
-             setMonitors((prev) =>
-              prev.map((m) => (m.id === monitor.id ? { ...m, status: "running" } : m))
-            );
+             if (currentDbStatus !== "running") {
+               currentDbStatus = "running";
+               await updateMonitor(monitor.id, { status: "running" });
+             }
           }
           // PHASE 1 DONE -> ENRICHING EMAILS
           else if (checkData.status === "enriching") {
             currentRequestId = checkData.newRequestId; 
             
-            setMonitors((prev) =>
-              prev.map((m) => (m.id === monitor.id ? { ...m, status: "enriching" } : m))
-            );
+            if (currentDbStatus !== "enriching") {
+              currentDbStatus = "enriching";
+              await updateMonitor(monitor.id, { status: "enriching" });
 
-            toast({
-              title: "Phase 1 Complete",
-              description: "Found the target businesses. Now extracting their private emails...",
-              duration: 6000,
-            });
+              toast({
+                title: "Phase 1 Complete",
+                description: "Found the target businesses. Now extracting their private emails...",
+                duration: 6000,
+              });
+            }
           }
           // ENTIRE JOB FINISHED
           else if (checkData.status === "completed" || checkData.status === "failed") {
@@ -201,9 +212,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
               });
             }
 
-            setMonitors((prev) =>
-              prev.map((m) => (m.id === monitor.id ? { ...m, status: checkData.status } : m))
-            );
+            // Sync final status to Database
+            await updateMonitor(monitor.id, { status: checkData.status });
             await fetchData(); 
           }
         } catch (err) {
@@ -219,9 +229,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         description: error.message,
         variant: "destructive",
       });
-      setMonitors((prev) =>
-        prev.map((m) => (m.id === monitor.id ? { ...m, status: "failed" } : m)),
-      );
+      // Save failure to Database
+      await updateMonitor(monitor.id, { status: "failed" });
     }
   };
 
@@ -338,16 +347,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       });
       setMonitors((prev) => prev.filter((m) => m.id !== monitorId));
     } catch (e) {}
-  };
-
-  const updateMonitor = async (
-    monitorId: string,
-    updates: Partial<Monitor>,
-  ) => {
-    await supabase.from("monitors").update(updates).eq("id", monitorId);
-    setMonitors((prev) =>
-      prev.map((m) => (m.id === monitorId ? { ...m, ...updates } : m)),
-    );
   };
 
   return (
