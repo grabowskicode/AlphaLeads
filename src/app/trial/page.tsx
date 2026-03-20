@@ -106,7 +106,7 @@ export default function TrialPage() {
             )}
           >
             {step === 1
-              ? "Claim your 20 Free Credits"
+              ? "Claim your 150 Free Credits"
               : "Check your inbox for the PIN"}
           </p>
         </div>
