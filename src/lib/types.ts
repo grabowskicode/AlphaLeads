@@ -69,6 +69,6 @@ export interface Monitor {
   user_id: string;
   keyword: string;
   location: string;
-  status: "active" | "paused" | "completed" | "failed";
+  status: "active" | "paused" | "completed" | "failed" | "running" | "enriching";
   created_at: string;
 }
