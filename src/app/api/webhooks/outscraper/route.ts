@@ -95,7 +95,7 @@ export async function POST(req: Request) {
         await resend.emails.send({
           from: "AlphaLeads <onboarding@resend.dev>",
           to: userData.email,
-          subject: `Your scan for "${keyword}" is complete!`,
+          subject: `Your scan for "${keyword}" is complete in AlphaLeads!`,
           html: `<p>Your background scan for <strong>${keyword}</strong> has successfully finished. Log in to view your ${formattedLeads.length} new leads.</p>`,
         });
       }
