@@ -9,35 +9,41 @@ export interface User {
 export interface Lead {
   id: string; // UUID
   place_id: string; // The Google ID
-  business_name: string;
-  rating: number;
-  review_count: number;
+  business_name: string | null;
+  rating: number | null;
+  review_count: number | null;
 
   // Geographical (Updated for V2 Architecture)
-  city?: string;
-  zip_code?: string;
+  city?: string | null;
+  zip_code?: string | null;
 
-  // Contact
-  website?: string;
-  phone?: string;
-  email?: string;
-  full_name?: string;
+  // Contact & Enrichment
+  website?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  full_name?: string | null;
+  linkedin?: string | null;
+  email_status?: string | null;
 
   // Analysis
-  reviews_per_score_1?: number;
-  reviews_per_score_5?: number;
-  website_generator?: string;
-  website_has_fb_pixel?: boolean;
-  is_verified?: boolean;
+  reviews_per_score_1?: number | null;
+  reviews_per_score_5?: number | null;
+  website_generator?: string | null;
+  website_has_fb_pixel?: boolean | null;
+  is_verified?: boolean | null;
+  photos_count?: number | null;
 
   // Categorization
-  bucket_category: string; // e.g., "Reputation Repair"
-  bucket_details: string;
-  business_status?: string;
+  bucket_category?: string | null; 
+  bucket_details?: string | null;
+  business_status?: string | null;
 
   // Caching System
-  keyword?: string;
-  last_scraped_at?: string;
+  keyword?: string | null;
+  last_scraped_at?: string | null;
+
+  // Frontend State (Joined from user_leads)
+  is_unlocked?: boolean;
 }
 
 // Junction Table for User <-> Lead
@@ -45,7 +51,7 @@ export interface UserLead {
   user_id: string;
   lead_id: string;
   is_unlocked: boolean;
-  notes?: string;
+  notes?: string | null;
 }
 
 // Geographical Database (For Area Selection)
@@ -53,6 +59,16 @@ export interface PostalCode {
   id: string;
   city: string;
   zip_code: string;
-  admin1?: string; // State / Province
-  admin2?: string; // County / Borough
+  admin1?: string | null; // State / Province
+  admin2?: string | null; // County / Borough
+}
+
+// System Monitors
+export interface Monitor {
+  id: string;
+  user_id: string;
+  keyword: string;
+  location: string;
+  status: "active" | "paused" | "completed" | "failed";
+  created_at: string;
 }
