@@ -157,7 +157,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       toast({
         title: "Background Scan Started",
-        description: "Your scan is running safely. We will send you an email when your leads are ready.",
+        description: "Your scan is running safely. It will take 5-10 minutes to complete.",
         duration: 8000, 
       });
 
@@ -189,8 +189,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
               await updateMonitor(monitor.id, { status: "enriching" });
 
               toast({
-                title: "Phase 1 Complete",
-                description: "Found the target businesses. Now extracting their private emails...",
+                title: "Searching Complete",
+                description: "Found the businesses. Now extracting their private emails...",
                 duration: 6000,
               });
             }
