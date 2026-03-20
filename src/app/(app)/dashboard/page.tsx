@@ -259,9 +259,9 @@ export default function DashboardPage() {
       </div>
 
       {/* CONSOLE WINDOW */}
-      <div className="space-y-4 pt-4">
+      {/*<div className="space-y-4 pt-4">
         <ConsoleWindow />
-      </div>
+      </div>*/}
     </div>
   );
 }
