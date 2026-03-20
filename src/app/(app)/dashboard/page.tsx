@@ -1,3 +1,4 @@
+// src/app/(app)/dashboard/page.tsx
 "use client";
 
 import {
@@ -13,7 +14,6 @@ import {
 import { useData } from "@/context/data-provider";
 import { AddMonitorDialog } from "@/components/dashboard/add-monitor-dialog";
 import { ConsoleWindow } from "@/components/dashboard/console-window";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -129,7 +129,6 @@ export default function DashboardPage() {
               <tr>
                 <th className="px-6 py-3">Keyword</th>
                 <th className="px-6 py-3">Location</th>
-                <th className="px-6 py-3">Status</th>
                 <th className="px-6 py-3">Last Checked</th>
                 <th className="px-6 py-3 text-right">Actions</th>
               </tr>
@@ -138,7 +137,7 @@ export default function DashboardPage() {
               {monitors.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={4}
                     className="px-6 py-8 text-center text-zinc-500"
                   >
                     No active scans. Click "Add Scan" to start tracking.
@@ -154,18 +153,6 @@ export default function DashboardPage() {
                       {m.keyword}
                     </td>
                     <td className="px-6 py-4 text-zinc-400">{m.location}</td>
-                    <td className="px-6 py-4">
-                      <Badge
-                        variant="outline"
-                        className={`uppercase text-[10px] tracking-wider border ${
-                          m.status === "active"
-                            ? "bg-[#ffe600]/10 text-[#ffe600] border-[#ffe600]/20 animate-pulse"
-                            : "bg-zinc-800 text-zinc-500 border-zinc-700"
-                        }`}
-                      >
-                        {m.status === "active" ? "RUNNING" : "READY"}
-                      </Badge>
-                    </td>
                     <td className="px-6 py-4 text-zinc-500">
                       {new Date(m.created_at).toLocaleDateString()}
                     </td>
