@@ -365,8 +365,8 @@ export function AddMonitorDialog() {
 
       if (result.success) {
         toast({
-          title: "Scan Started Successfully!",
-          description: `We are now scraping ${keyword} in the background. It will take 5-15 minutes to complete.`,
+          title: "Scan Added Successfully!",
+          description: `You will scrape ${keyword} in the background. Click on the play button, and it will take 5-15 minutes to complete.`,
           duration: 9000,
         });
         resetState();
