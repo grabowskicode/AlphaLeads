@@ -124,9 +124,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // --- 3. START SCRAPE (V2 POLLING ARCHITECTURE) ---
   const startScrape = async (monitor: Monitor) => {
-    // 1. Optimistically set the UI to active
+    // 1. Optimistically set the UI to running
     setMonitors((prev) =>
-      prev.map((m) => (m.id === monitor.id ? { ...m, status: "active" } : m)),
+      prev.map((m) => (m.id === monitor.id ? { ...m, status: "running" } : m)),
     );
 
     try {
@@ -148,8 +148,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       await fetchData();
 
       toast({
-        title: "Background Scan Started 🚀",
-        description: "Your scan is running safely. Please keep this tab open—we will automatically grab the leads when finished.",
+        title: "Background Scan Started",
+        description: "Your scan is running safely. We will send you an email when your leads are ready.",
         duration: 8000, 
       });
 
@@ -157,19 +157,41 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      let currentRequestId = startData.requestId;
+
       const checkInterval = setInterval(async () => {
         try {
-          const checkRes = await fetch(`/api/extract/check?requestId=${startData.requestId}&userId=${user.id}`);
+          const checkRes = await fetch(`/api/extract/check?requestId=${currentRequestId}&userId=${user.id}`);
           const checkData = await checkRes.json();
 
-          // If the task is finished (either success or fail)
-          if (checkData.status === "completed" || checkData.status === "failed") {
-            clearInterval(checkInterval); // Stop asking
+          // PHASE 0: MAPS SCRAPE RUNNING
+          if (checkData.status === "pending" || checkData.status === "processing") {
+             setMonitors((prev) =>
+              prev.map((m) => (m.id === monitor.id ? { ...m, status: "running" } : m))
+            );
+          }
+          // PHASE 1 DONE -> ENRICHING EMAILS
+          else if (checkData.status === "enriching") {
+            currentRequestId = checkData.newRequestId; 
+            
+            setMonitors((prev) =>
+              prev.map((m) => (m.id === monitor.id ? { ...m, status: "enriching" } : m))
+            );
+
+            toast({
+              title: "Phase 1 Complete",
+              description: "Found the target businesses. Now extracting their private emails...",
+              duration: 6000,
+            });
+          }
+          // ENTIRE JOB FINISHED
+          else if (checkData.status === "completed" || checkData.status === "failed") {
+            clearInterval(checkInterval); 
             
             if (checkData.status === "completed") {
               toast({
-                title: "Scan Complete! 🎉",
-                description: `Successfully processed and saved your new leads.`,
+                title: "Scan Complete",
+                description: "Successfully processed and saved your new leads.",
               });
             } else {
               toast({
@@ -179,16 +201,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
               });
             }
 
-            // Set UI back to ready and fetch the new leads
             setMonitors((prev) =>
-              prev.map((m) => (m.id === monitor.id ? { ...m, status: "paused" } : m))
+              prev.map((m) => (m.id === monitor.id ? { ...m, status: checkData.status } : m))
             );
             await fetchData(); 
           }
         } catch (err) {
           console.error("Error checking status:", err);
         }
-      }, 15000); // Checks every 15 seconds
+      }, 15000);
 
     } catch (error: any) {
       console.error(error);
@@ -199,7 +220,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         variant: "destructive",
       });
       setMonitors((prev) =>
-        prev.map((m) => (m.id === monitor.id ? { ...m, status: "paused" } : m)),
+        prev.map((m) => (m.id === monitor.id ? { ...m, status: "failed" } : m)),
       );
     }
   };
@@ -290,8 +311,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
     } = await supabase.auth.getUser();
     if (!user) return;
 
-    // This ONLY deletes the user's connection to the lead.
-    // The business data remains safely stored in your master 'leads' database.
     await supabase.from("user_leads").delete().eq("user_id", user.id);
     setLeads([]);
 
