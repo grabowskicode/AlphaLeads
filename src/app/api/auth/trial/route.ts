@@ -67,7 +67,7 @@ export async function POST(req: Request) {
 
     const userId = authData.user.id;
 
-    // 4. Inject 20 Free Trial Credits
+    // 4. Inject 150 Free Trial Credits
     const { error: dbError } = await supabaseAdmin.from("users").upsert({
       id: userId,
       email: email,
@@ -89,7 +89,7 @@ export async function POST(req: Request) {
       html: `
         <div style="font-family: sans-serif; max-w: 600px; margin: 0 auto; color: #111;">
           <h2 style="color: #000;">Welcome to AlphaLeads!</h2>
-          <p>Your free trial account has been created and loaded with <strong>20 Free Credits</strong>.</p>
+          <p>Your free trial account has been created and loaded with <strong>150 Free Credits</strong>.</p>
           <p>Here is your secure login PIN:</p>
           <h1 style="background: #f4f4f5; padding: 20px; text-align: center; letter-spacing: 8px; border-radius: 8px; font-size: 32px; color: #000;">
             ${generatedPin}
